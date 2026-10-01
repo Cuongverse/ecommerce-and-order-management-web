@@ -1,0 +1,4 @@
+$kind: collection
+name: Auth
+description: Authentication endpoints — sign up and log in to obtain a JWT token. Run these first; the token is automatically saved to the jwt_token variable.
+order: 1000

@@ -1,0 +1,36 @@
+$kind: http-request
+name: 'Get User Profile'
+order: 1000
+method: GET
+url: '{{base_url}}/api/users/profile'
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("Status is 200 OK", function () {
+          pm.response.to.have.status(200);
+      });
+
+      pm.test("Response has user id", function () {
+          var jsonData = pm.response.json();
+          pm.expect(jsonData).to.have.property("id");
+      });
+
+      pm.test("Response has email", function () {
+          var jsonData = pm.response.json();
+          pm.expect(jsonData).to.have.property("email");
+          pm.expect(jsonData.email).to.be.a("string");
+      });
+
+      pm.test("Response has firstName and lastName", function () {
+          var jsonData = pm.response.json();
+          pm.expect(jsonData).to.have.property("firstName");
+          pm.expect(jsonData).to.have.property("lastName");
+      });
+
+      // Capture user id
+      var jsonData = pm.response.json();
+      if (jsonData && jsonData.id) {
+          pm.collectionVariables.set("user_id", String(jsonData.id));
+          pm.environment.set("user_id", String(jsonData.id));
+      }

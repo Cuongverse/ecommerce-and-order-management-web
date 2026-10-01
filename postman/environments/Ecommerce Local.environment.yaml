@@ -1,0 +1,26 @@
+name: Ecommerce Local
+values:
+  - key: base_url
+    value: 'http://localhost:5432'
+    enabled: true
+    type: default
+  - key: jwt_token
+    value: ''
+    enabled: true
+    type: default
+  - key: user_id
+    value: ''
+    enabled: true
+    type: default
+  - key: product_id
+    value: ''
+    enabled: true
+    type: default
+  - key: test_email
+    value: 'testuser@example.com'
+    enabled: true
+    type: default
+  - key: test_password
+    value: 'password123'
+    enabled: true
+    type: default

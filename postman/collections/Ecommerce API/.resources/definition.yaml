@@ -1,0 +1,16 @@
+$kind: collection
+name: Ecommerce API
+description: |-
+  Complete test collection for the Spring Boot Ecommerce & Order Management backend.
+  Base URL: http://localhost:5432
+  Auth: JWT Bearer token (obtained from /auth/signup or /auth/login).
+  Endpoints under /api/** require the Authorization header.
+variables:
+  - key: base_url
+    value: 'http://localhost:5432'
+  - key: jwt_token
+    value: ''
+  - key: user_id
+    value: ''
+  - key: product_id
+    value: ''

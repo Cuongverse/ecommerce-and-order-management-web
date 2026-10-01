@@ -1,0 +1,56 @@
+$kind: http-request
+name: 'Get All Products'
+order: 1000
+method: GET
+url: '{{base_url}}/api/products'
+queryParams:
+  - key: category
+    value: ''
+    disabled: true
+    description: 'Filter by category name'
+  - key: brand
+    value: ''
+    disabled: true
+    description: 'Filter by brand'
+  - key: color
+    value: ''
+    disabled: true
+    description: 'Filter by color'
+  - key: minPrice
+    value: ''
+    disabled: true
+    description: 'Minimum price filter'
+  - key: maxPrice
+    value: ''
+    disabled: true
+    description: 'Maximum price filter'
+  - key: minDiscount
+    value: ''
+    disabled: true
+    description: 'Minimum discount percent'
+  - key: sort
+    value: ''
+    disabled: true
+    description: 'Sort field (e.g. price_low, price_high)'
+  - key: pageNumber
+    value: '0'
+    disabled: true
+    description: 'Page number (0-based)'
+  - key: pageSize
+    value: '10'
+    disabled: true
+    description: 'Page size'
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("Status is 200 OK", function () {
+          pm.response.to.have.status(200);
+      });
+
+      pm.test("Response is an array or paged object", function () {
+          var jsonData = pm.response.json();
+          pm.expect(jsonData).to.satisfy(function(d) {
+              return Array.isArray(d) || (typeof d === "object" && d !== null);
+          });
+      });
