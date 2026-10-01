@@ -1,0 +1,40 @@
+$kind: http-request
+name: Login
+order: 2000
+method: POST
+url: '{{base_url}}/auth/login'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "email": "testuser@example.com",
+      "password": "password123"
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("Status is 201 Created", function () {
+          pm.response.to.have.status(201);
+      });
+
+      pm.test("Response has jwt token", function () {
+          var jsonData = pm.response.json();
+          pm.expect(jsonData).to.have.property("jwt");
+          pm.expect(jsonData.jwt).to.be.a("string").and.not.empty;
+      });
+
+      pm.test("Response has message", function () {
+          var jsonData = pm.response.json();
+          pm.expect(jsonData).to.have.property("message");
+      });
+
+      // Capture token for subsequent requests
+      var jsonData = pm.response.json();
+      if (jsonData && jsonData.jwt) {
+          pm.collectionVariables.set("jwt_token", jsonData.jwt);
+          pm.environment.set("jwt_token", jsonData.jwt);
+      }

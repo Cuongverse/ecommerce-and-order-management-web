@@ -1,0 +1,10 @@
+$kind: collection
+name: Products
+description: |-
+  Product catalogue endpoints. GET endpoints are public; POST/PUT/DELETE endpoints require a valid JWT token.
+order: 3000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{jwt_token}}'

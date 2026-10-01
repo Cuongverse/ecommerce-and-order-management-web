@@ -1,0 +1,33 @@
+$kind: http-request
+name: 'Get Product by ID'
+order: 2000
+method: GET
+url: '{{base_url}}/api/products/:productId'
+pathVariables:
+  - key: productId
+    value: '{{product_id}}'
+    description: 'ID of the product to retrieve'
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("Status is 200 OK", function () {
+          pm.response.to.have.status(200);
+      });
+
+      pm.test("Response has product id", function () {
+          var jsonData = pm.response.json();
+          pm.expect(jsonData).to.have.property("id");
+      });
+
+      pm.test("Response has title", function () {
+          var jsonData = pm.response.json();
+          pm.expect(jsonData).to.have.property("title");
+          pm.expect(jsonData.title).to.be.a("string");
+      });
+
+      pm.test("Response has price", function () {
+          var jsonData = pm.response.json();
+          pm.expect(jsonData).to.have.property("price");
+          pm.expect(jsonData.price).to.be.a("number");
+      });

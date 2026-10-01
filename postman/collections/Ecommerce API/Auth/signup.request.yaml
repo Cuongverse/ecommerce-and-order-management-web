@@ -1,0 +1,26 @@
+$kind: http-request
+name: Sign Up
+order: 1000
+method: POST
+url: "{{base_url}}/auth/signup"
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "firstName": "Test",
+      "lastName": "User",
+      "email": "testuser@example.com",
+      "password": "password123"
+    }
+scripts:
+  - type: afterResponse
+    code: |
+      pm.test("Status is 401 Unauthorized", function () {
+          pm.response.to.have.status(401);
+      });
+
+      pm.test("Response time is less than 500ms", function () {
+          pm.expect(pm.response.responseTime).to.be.below(500);
+      });

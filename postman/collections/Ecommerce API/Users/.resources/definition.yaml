@@ -1,0 +1,11 @@
+$kind: collection
+name: Users
+description: |-
+  User profile endpoints. All requests require a valid JWT token in the Authorization header.
+  The token is captured automatically after Sign Up or Login.
+order: 2000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{jwt_token}}'
