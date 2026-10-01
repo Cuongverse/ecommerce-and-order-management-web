@@ -32,7 +32,7 @@ public class JwtValidator extends OncePerRequestFilter{
         // lấy giá trị chuỗi token từ Header của request --> là "Authorization"
         String jwt = request.getHeader(JwtConstant.JWT_HEADER);
         
-        if (jwt != null){
+        if (jwt != null && jwt.startsWith("Bearer ")){
             // cắt bỏ tiền tố "Bearer " để lấy chuỗi mã JWT thuần
             jwt = jwt.substring(7);  // 
             try{

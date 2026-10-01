@@ -43,7 +43,11 @@ public class Address {
 
     private String mobile;
 
-    Address(Long id, String firstName, String lastName, String streetAddress,
+    public Address(){
+
+    }
+
+    public Address(Long id, String firstName, String lastName, String streetAddress,
         String province, String city, String zipCode, User user, String mobile){
         this.id = id;
         this.firstName = firstName;

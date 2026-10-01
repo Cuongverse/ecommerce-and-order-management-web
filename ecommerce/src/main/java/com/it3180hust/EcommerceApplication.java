@@ -1,4 +1,4 @@
-package com.it3180hust.ecommerce;
+package com.it3180hust;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

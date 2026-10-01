@@ -38,11 +38,11 @@ public class AppConfig{
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/**").authenticated()
                 .anyRequest().permitAll()
-            )
+            );
 
-            // Default login options
-            .httpBasic(Customizer.withDefaults())
-            .formLogin(Customizer.withDefaults());
+            // // Default login options
+            // .httpBasic(Customizer.withDefaults())
+            // .formLogin(Customizer.withDefaults());
 
         http.addFilterBefore(new JwtValidator(), BasicAuthenticationFilter.class);
         return http.build();
@@ -51,10 +51,10 @@ public class AppConfig{
     @Bean 
     public CorsConfigurationSource corsConfigurationSource(){
         CorsConfiguration cfg = new CorsConfiguration();
-        cfg.setAllowedOrigins(Arrays.asList(
-            "http://localhost:3000", // link của localhost react
-            "http://localhost:4300" // link của localhost angular
-        ));
+        // cfg.setAllowedOrigins(Arrays.asList(
+        //     "http://localhost:3000", // link của localhost react
+        //     "http://localhost:4300" // link của localhost angular
+        // ));
         cfg.setAllowedMethods(Collections.singletonList("*"));
         cfg.setAllowedHeaders(Collections.singletonList("*"));
         cfg.setExposedHeaders(Collections.singletonList("Authorization"));

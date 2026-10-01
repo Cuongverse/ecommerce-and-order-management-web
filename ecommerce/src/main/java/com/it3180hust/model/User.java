@@ -9,7 +9,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.ElementCollection;
-import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -37,7 +36,6 @@ public class User{
     @OneToMany(mappedBy = "user", cascade=CascadeType.ALL)
     private List<Address> address = new ArrayList<>();
 
-    @Embedded
     @ElementCollection 
     @CollectionTable(name="payment_information", joinColumns = @JoinColumn (name="user_id"))
     private List<PaymentInformation> paymentInformation = new ArrayList<>();
