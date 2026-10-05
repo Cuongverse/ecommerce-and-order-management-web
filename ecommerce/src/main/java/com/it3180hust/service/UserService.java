@@ -5,6 +5,7 @@ import com.it3180hust.model.User;
 
 
 public interface UserService {
+    // not yet implemented
     public User findUserById(Long userId) throws UserException;
 
     public User findUserProfileByJwt(String jwt) throws UserException;
