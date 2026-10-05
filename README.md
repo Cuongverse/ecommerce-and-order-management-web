@@ -1,6 +1,6 @@
 # HỆ THỐNG THƯƠNG MẠI ĐIỆN TỬ VÀ QUẢN TRỊ VẬN HÀNH KHO VẬN
-> **E-Commerce & Order Management System (OMS)**  
-> **Đồ án môn học:** Nhập môn Công nghệ Phần mềm (IT3150 / IT3080) – Đại học Bách khoa Hà Nội (HUST).
+> **E-Commerce & Order Management System**  
+> **Dự án môn học:** Nhập môn Công nghệ Phần mềm (IT3180) – Đại học Bách khoa Hà Nội (HUST).
 
 ---
 
@@ -15,7 +15,7 @@ Khác với các ứng dụng bán lẻ thông thường, dự án tập trung c
 
 ---
 
-## 2. PHÂN VAI HỆ THỐNG (ACTORS & RBAC)
+## 2. PHÂN VAI HỆ THỐNG
 
 Hệ thống được thiết kế theo mô hình kiểm soát truy cập dựa trên vai trò (**Role-Based Access Control - RBAC**):
 
@@ -58,11 +58,10 @@ Hệ thống được thiết kế theo mô hình kiểm soát truy cập dựa 
   * Thư viện giao diện quản trị: Ant Design / Shadcn UI.
   * Quản trị State: Redux Toolkit hoặc Zustand.
 * **Backend:** 
-  * Runtime/Framework: Node.js (NestJS / Express.js) hoặc Spring Boot.
+  * Runtime/Framework: Spring Boot.
   * Xác thực & Phân quyền: JSON Web Token (JWT) + RBAC Middleware.
 * **Cơ sở dữ liệu:** 
-  * Hệ quản trị CSDL quan hệ: PostgreSQL / MySQL (chuẩn hóa dữ liệu 3NF, toàn vẹn khóa ngoại).
-  * ORM: Prisma / TypeORM.
+  * Hệ quản trị CSDL quan hệ: MySQL.
 * **Tích hợp bên ngoài (Integrations):**
   * Cổng thanh toán: VNPay Sandbox API.
   * Lưu trữ tài nguyên ảnh: Cloudinary API / AWS S3.
@@ -74,24 +73,29 @@ Hệ thống được thiết kế theo mô hình kiểm soát truy cập dựa 
 
 | STT | Họ và tên | MSSV | Vai trò chính | Trách nhiệm đảm nhiệm |
 | :-: | :--- | :-: | :--- | :--- |
-| 1 | *[Họ và tên]* | *[MSSV]* | Team Lead / BA & QA | Quản trị tiến độ, xây dựng tài liệu SRS/Use Case/UML, lập kịch bản kiểm thử (Test Plan/Postman) và chuẩn bị slide bảo vệ. |
-| 2 | *[Họ và tên]* | *[MSSV]* | Backend Lead | Thiết kế lược đồ CSDL (ERD), phân hệ Auth/RBAC, quản lý danh mục sản phẩm (SPU/SKU) và API Quản lý kho. |
-| 3 | *[Họ và tên]* | *[MSSV]* | Backend Dev | Hiện thực State Machine cho đơn hàng, cơ chế Transaction chống overselling, tích hợp VNPay Sandbox và API thống kê. |
-| 4 | *[Họ và tên]* | *[MSSV]* | Frontend Dev | Thiết kế và phát triển toàn bộ giao diện Storefront (Trang chủ, Lọc sản phẩm, Giỏ hàng, Checkout, Timeline đơn). |
-| 5 | *[Họ và tên]* | *[MSSV]* | Frontend Dev | Xây dựng giao diện Back-office Portal (Dashboard thống kê, Quản lý sản phẩm/SKU, Màn hình xuất-nhập kho và xử lý đơn). |
+| 1 | *Nguyễn Đức Cường* | *202516333* | Team Lead & Backend Dev | Quản trị tiến độ, xây dựng tài liệu SRS/Use Case/UML, lập kịch bản kiểm thử (Test Plan/Postman) và chuẩn bị slide bảo vệ. |
+| 2 | *Bùi Hữu Thắng* | *202516482* | Backend Dev | Hiện thực State Machine cho đơn hàng, cơ chế Transaction chống overselling, tích hợp VNPay Sandbox và API thống kê. |
+| 3 | *Đặng Hồng Tuấn* | *202416633* | Backend Dev | Thiết kế lược đồ CSDL (ERD), phân hệ Auth/RBAC, quản lý danh mục sản phẩm (SPU/SKU) và API Quản lý kho. |
+| 4 | *Trần Phúc Thái* | *202416603* | Frontend Dev | Thiết kế và phát triển toàn bộ giao diện Storefront (Trang chủ, Lọc sản phẩm, Giỏ hàng, Checkout, Timeline đơn). |
+| 5 | *Nguyễn Khang An* | *20183677* | Frontend Dev | Xây dựng giao diện Back-office Portal (Dashboard thống kê, Quản lý sản phẩm/SKU, Màn hình xuất-nhập kho và xử lý đơn). |
 
 ---
 
 ## 6. HƯỚNG DẪN CÀI ĐẶT & CHẠY THỬ (GETTING STARTED)
 
 ### 6.1. Yêu cầu môi trường
-* Node.js $\ge$ 18.x hoặc Java JDK $\ge$ 17 (tùy stack đã thống nhất).
-* Docker & Docker Compose (khuyến nghị dùng để khởi tạo Database nhanh chóng).
+* Node.js $\ge$ 18.x hoặc Java JDK $\ge$ 17.
+* Docker & Docker Compose.
 * Git.
 
 ### 6.2. Các bước khởi chạy cục bộ (Local Development)
 
 1. **Clone mã nguồn dự án:**
    ```bash
-   git clone <URL-repository-cua-nhom>
-   cd <thu-muc-du-an>
+   git clone https://github.com/Cuongverse/ecommerce-and-order-management-web.git
+   ```
+2. **Chuyển tới thư mục dự án và chạy:**
+  ```bash
+  cd ecommerce
+  (sẽ còn cập nhật thêm)
+  ```
