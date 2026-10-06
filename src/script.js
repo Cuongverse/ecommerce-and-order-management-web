@@ -126,3 +126,43 @@ function tickCountdown() {
 }
 tickCountdown();
 setInterval(tickCountdown, 1000);
+
+/* ---------- filters + search ---------- */
+const filters = {
+    suggested: list => list,
+    under:     list => list.filter(p => parseFloat(p.price) < 50),
+    above:     list => list.filter(p => parseFloat(p.price) >= 50),
+    top:       list => list.filter(p => p.rating >= 4).sort((a, b) => b.rating - a.rating),
+    low:       list => [...list].sort((a, b) => parseFloat(a.price) - parseFloat(b.price)),
+};
+
+let activeFilter = 'suggested';
+let searchText = '';
+
+function applyFilters() {
+    const searched = products.filter(p => p.name.toLowerCase().includes(searchText));
+    const result = filters[activeFilter](searched);
+
+    if (result.length === 0) {
+        productGrid.innerHTML = '<p class="no-results">No cards found 😕</p>';
+    } else {
+        renderProducts(result);
+    }
+}
+
+document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        activeFilter = btn.dataset.filter;
+        applyFilters();
+    });
+});
+
+// your navbar search box now works together with the filters
+document.querySelector('.search-box input').addEventListener('input', e => {
+    searchText = e.target.value.toLowerCase();
+    applyFilters();
+});
+
+applyFilters();
