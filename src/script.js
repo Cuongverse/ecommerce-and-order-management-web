@@ -70,3 +70,59 @@ slider.addEventListener('mouseleave', startAuto);
 
 updateDots();
 startAuto();
+
+/* ---------- product cards ---------- */
+const products = [
+    { name: "VND Steam Wallet Việt Nam Gift Card", price: "420$", rating: 4.5, img: "product_images/testing.png" },
+    { name: "USD Steam Wallet Card Order",         price: "67$",  rating: 4.5, img: "product_images/testing.png" },
+    { name: "Euro Steam Wallet Gift Card",         price: "99$",  rating: 1.0, img: "product_images/testing.png" },
+    { name: "PUBG PC Pass Steam",                  price: "30$",  rating: 4.5, img: "product_images/testing.png" },
+    { name: "Random Steam Game Code",              price: "9$",   rating: 2.0, img: "product_images/testing.png" },
+    { name: "Where Winds Meet Top-up",             price: "25$",  rating: 4.5, img: "product_images/testing.png" },
+    { name: "Fuckass cards",                       price: "67$",  rating: 3.35,img: "product_images/testing.png" },
+    { name: "Fuckass cards",                       price: "67$",  rating: 3.35,img: "product_images/testing.png" },
+    { name: "Fuckass cards",                       price: "67$",  rating: 3.35,img: "product_images/testing.png" },
+    { name: "Fuckass cards",                       price: "67$",  rating: 3.35,img: "product_images/testing.png" },
+    { name: "Fuckass cards",                       price: "67$",  rating: 3.35,img: "product_images/testing.png" },
+    { name: "Fuckass cards",                       price: "67$",  rating: 3.35,img: "product_images/testing.png" },
+    { name: "Fuckass cards",                       price: "67$",  rating: 3.35,img: "product_images/testing.png" },
+    { name: "Fuckass cards",                       price: "67$",  rating: 3.35,img: "product_images/testing.png" },
+    { name: "Fuckass cards",                       price: "67$",  rating: 3.35,img: "product_images/testing.png" },
+    { name: "Fuckass cards",                       price: "67$",  rating: 3.35,img: "product_images/testing.png" },
+];
+
+const productGrid = document.querySelector('.product-grid');
+
+function renderProducts(list) {
+    productGrid.innerHTML = list.map(p => `
+        <a href="" class="product-card">
+            <img src="${p.img}" alt="${p.name}">
+            <div class="product-info">
+                <h4>${p.name}</h4>
+                <p class="price">${p.price}</p>
+                <div class="stars" style="--rating: ${p.rating}">★★★★★</div>
+            </div>
+        </a>
+    `).join('');
+}
+
+renderProducts(products);
+
+/* ---------- deal countdown ---------- */
+function endOfWeek() {
+    const d = new Date();
+    d.setHours(23, 59, 59, 0);
+    d.setDate(d.getDate() + (7 - d.getDay()) % 7);   // next Sunday night
+    return d;
+}
+
+function tickCountdown() {
+    const diff = Math.max(0, endOfWeek() - new Date());
+    const pad = n => String(n).padStart(2, '0');
+    document.getElementById('cd-days').textContent  = pad(Math.floor(diff / 86400000));
+    document.getElementById('cd-hours').textContent = pad(Math.floor(diff / 3600000) % 24);
+    document.getElementById('cd-mins').textContent  = pad(Math.floor(diff / 60000) % 60);
+    document.getElementById('cd-secs').textContent  = pad(Math.floor(diff / 1000) % 60);
+}
+tickCountdown();
+setInterval(tickCountdown, 1000);
