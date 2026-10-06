@@ -1,0 +1,222 @@
+*{
+    margin: 0; 
+    padding: 0; 
+    box-sizing: border-box;
+}
+
+body{
+      font-family: "Montserrat", sans-serif;
+  font-optical-sizing: auto;
+  font-style: normal;
+}
+
+.navbar{ /*for the logo and text to align*/
+    display: flex; 
+    align-items: center;
+    padding: 20px 0;
+}
+
+nav{ /*for the text to take up the rest of the*/
+    flex: 1; 
+    text-align: center;
+}
+
+nav ul{
+    display: inline-block;
+    list-style-type: none;
+}
+
+nav ul li{ /*space between the text of the li*/
+    display: inline-block;
+    margin-right: 20px;
+    font-size: 18px;
+}
+
+a{
+    text-decoration: none;
+    color: #555;
+}
+
+p{
+    color:#555; 
+}
+
+.container{
+    max-width: 1400px;
+    margin: auto; 
+    /*for mobile display*/
+    padding-left: 25px;
+    padding-right: 25px;
+}
+
+.row{
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: space-around;
+}
+
+.col-2{
+    flex-basis: 50%;
+    min-width: 300px;
+} 
+
+.col-2 image{
+    max-width: 100%;
+    padding: 50px 0;
+}
+
+.col-2 h1{
+    font-size: 50px;
+    line-height: 60px;
+    margin: 25px 0;
+}
+
+.btn{
+    display: inline-block;
+    background: #ff523b;
+    color: #fff; 
+    padding: 10px 30px; 
+    margin: 25px 0; 
+    border-radius: 30px; 
+}
+
+.header{
+    background: radial-gradient(#fff, #ffd6d6)
+}
+
+
+/*claude slider cs*/
+.slider{
+    position: relative;
+    width: 700px;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.slide-track{
+    display: flex;
+    transition: transform 0.6s ease;
+}
+
+.col-2 .slider img{          /* beats the .col-2 img padding rule */
+    flex: 0 0 100%;          /* every image fills the slider exactly */
+    width: 100%;
+    padding: 0;
+    aspect-ratio: 16 / 9;    /* match your banners, or delete with object-fit */
+    object-fit: cover;
+}
+
+.slider-btn{
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.45);
+    color: #fff;
+    border: none;
+    padding: 12px 14px;
+    font-size: 18px;
+    cursor: pointer;
+}
+.slider-btn:hover{ background: rgba(0, 0, 0, 0.7); }
+.prev{ left: 0; }
+.next{ right: 0; }
+
+/*additional dots*/
+
+.slider-btn{
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.45);
+    color: #fff;
+    border: none;
+    width: 50px;
+    height: 50px;
+    border-radius: 60%;
+    font-size: 15px;
+    cursor: pointer;
+    z-index: 2;
+}
+.slider-btn:hover{ background: rgba(0, 0, 0, 0.6); }
+.prev{ left: 10px; }
+.next{ right: 10px; }
+
+.dots{
+    position: absolute;
+    bottom: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    z-index: 2;
+}
+
+.dot{
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #fff;
+    opacity: 0.5;
+    border: none;
+    padding: 0; 
+    cursor: pointer;
+    transition: opacity 0.3s, transform 0.3s;
+}
+.dot.active{
+    opacity: 1;
+    transform: scale(1.3);
+}
+
+/*search bar*/
+.nav-actions{
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-left: 20px;
+}
+
+.search-box{
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid #f0c4c4;
+    border-radius: 30px;
+    padding: 0 14px;
+    height: 40px;
+    color: #555;
+}
+.search-box input{
+    border: none;
+    outline: none;
+    background: transparent;
+    width: 180px;
+    font-size: 15px;
+}
+
+.icon-btn{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.8);
+    color: #555;
+    cursor: pointer;
+}
+.icon-btn:hover{ background: #fff; }
+
+.avatar-btn{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 50%;
+    background: #ff523b;
+    color: #fff;
+    cursor: pointer;
+}
