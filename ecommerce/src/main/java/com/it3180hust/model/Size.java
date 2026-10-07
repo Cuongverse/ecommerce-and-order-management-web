@@ -1,5 +1,8 @@
 package com.it3180hust.model;
 
+import jakarta.persistence.Embeddable;
+
+@Embeddable 
 public class Size {
     private String name;
     private int quantity;

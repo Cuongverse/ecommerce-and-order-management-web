@@ -22,10 +22,12 @@ public class OrderServiceImplementation implements OrderService{
 
     public OrderServiceImplementation(CartRepository cartRepository, 
         CartItemService cartItemService,
-        ProductService productService){
+        ProductService productService,
+        OrderRepository orderRepository){
         this.cartItemService = cartItemService;
         this.cartRepository = cartRepository;
         this.productService = productService;
+        this.orderRepository = orderRepository;
     }
 
     @Override

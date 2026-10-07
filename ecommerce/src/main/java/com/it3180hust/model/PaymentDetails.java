@@ -1,5 +1,8 @@
 package com.it3180hust.model;
 
+import jakarta.persistence.Embeddable;
+
+@Embeddable 
 public class PaymentDetails {
     private String paymentMethod;
     private String status;

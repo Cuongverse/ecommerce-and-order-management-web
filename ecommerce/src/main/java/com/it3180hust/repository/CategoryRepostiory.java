@@ -9,7 +9,7 @@ import com.it3180hust.model.Category;
 public interface CategoryRepostiory extends JpaRepository<Category, Long>{
     public Category findByName(String name);
 
-    @Query("SELECT c FROM Category c WHERE c.name =: name AND c.parentCategory.name=:parentCategoryName")
+    @Query("SELECT c FROM Category c WHERE c.name =:name AND c.parentCategory.name=:parentCategoryName")
     public Category findByNameAndParent(@Param("name") String name,
         @Param("parentCategoryName") String parentCategoryName);
 }

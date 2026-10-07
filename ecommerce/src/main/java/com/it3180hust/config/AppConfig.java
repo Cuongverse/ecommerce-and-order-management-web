@@ -34,6 +34,7 @@ public class AppConfig{
 
             // Endpoint permissions
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .requestMatchers("/api/**").authenticated()
                 .anyRequest().permitAll()
             );

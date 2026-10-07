@@ -1,6 +1,7 @@
 package com.it3180hust.config;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 
 import javax.crypto.SecretKey;
@@ -44,12 +45,16 @@ public class JwtValidator extends OncePerRequestFilter{
                 // lấy đối tượng Claims (chứa thông tin/payload lưu trong token)
                 Claims claims = Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(jwt).getBody();
 
-                String email = String.valueOf(claims.get("email"));
-                
-                // lấy danh sách quyền hạn/vai trò
-                String authorities = String.valueOf(claims.get("authorities"));
+                Object authoritiesClaim = claims.get("authorities");
 
-                List<GrantedAuthority> auths = AuthorityUtils.commaSeparatedStringToAuthorityList(authorities);
+                List<GrantedAuthority> auths = Collections.emptyList();
+
+                if ((authoritiesClaim != null) && !String.valueOf(authoritiesClaim).equals("null")){
+                    auths = AuthorityUtils.commaSeparatedStringToAuthorityList(String.valueOf(authoritiesClaim));
+                }
+
+                String email = String.valueOf(claims.get("email"));
+
                 Authentication authentication = new UsernamePasswordAuthenticationToken(email, null, auths);
 
                 // lưu đối tượng authentication vào SecurityContext

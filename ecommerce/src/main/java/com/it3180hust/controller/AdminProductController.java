@@ -26,14 +26,14 @@ public class AdminProductController {
     @Autowired 
     private ProductService productService;
 
-    @PostMapping("/")
+    @PostMapping("")
     public ResponseEntity<Product> createProduct(@RequestBody CreateProductRequest req){
         Product product = productService.createProduct(req);
         return new ResponseEntity<Product>(product,HttpStatus.CREATED);
     }
 
     @DeleteMapping("/{productId}/delete")
-    public ResponseEntity<ApiResponse> deleteProdcut(@PathVariable Long productId) throws ProductException{
+    public ResponseEntity<ApiResponse> deleteProduct(@PathVariable Long productId) throws ProductException{
         productService.deleteProduct(productId);
         ApiResponse res = new ApiResponse();
         res.setMessage("Product Deleted Successfully");

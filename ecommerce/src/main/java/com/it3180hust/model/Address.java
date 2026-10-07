@@ -93,7 +93,7 @@ public class Address {
         return user;
     }
 
-    public String mobile(){
+    public String getMobile(){
         return mobile;
     }
 
@@ -130,7 +130,7 @@ public class Address {
         this.user = user;
     }
 
-    public void mobile(String mobile){
+    public void setMobile(String mobile){
         this.mobile = mobile;
     }
 }
