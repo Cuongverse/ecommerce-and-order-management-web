@@ -40,6 +40,7 @@ public class Review {
         this.review = review;
         this.user = user;
         this.createdAt = createdAt;
+        this.product = product;
     }
 
     public Long getId(){

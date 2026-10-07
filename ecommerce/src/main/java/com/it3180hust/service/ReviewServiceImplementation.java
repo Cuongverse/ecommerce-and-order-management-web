@@ -36,6 +36,7 @@ public class ReviewServiceImplementation implements ReviewService {
         Product product = productService.findProductById(req.getProductId());
         
         Review review = new Review();
+        review.setReview(req.getReview());
         review.setUser(user);
         review.setProduct(product);
         review.setId(req.getProductId());

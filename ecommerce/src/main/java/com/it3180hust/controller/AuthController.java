@@ -1,10 +1,15 @@
 package com.it3180hust.controller;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -18,6 +23,7 @@ import com.it3180hust.model.User;
 import com.it3180hust.repository.UserRepository;
 import com.it3180hust.request.LoginRequest;
 import com.it3180hust.response.AuthResponse;
+import com.it3180hust.service.CartService;
 import com.it3180hust.service.CustomUserServiceImplementation;
 
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -32,15 +38,18 @@ public class AuthController {
     private JwtProvider jwtProvider;
     private PasswordEncoder passwordEncoder;
     private CustomUserServiceImplementation customUserService;
+    private CartService cartService;
 
     public AuthController(UserRepository userRepository, 
         CustomUserServiceImplementation customUserService,
         PasswordEncoder passwordEncoder,
-        JwtProvider jwtProvider){
+        JwtProvider jwtProvider,
+        CartService cartService){
         this.userRepository = userRepository;
         this.customUserService = customUserService;
         this.passwordEncoder = passwordEncoder;
         this.jwtProvider = jwtProvider;
+        this.cartService = cartService;
     }
 
     @PostMapping("/signup")
@@ -62,9 +71,17 @@ public class AuthController {
         createdUser.setFirstName(firstName);
         createdUser.setLastName(lastName);
 
-        User savedUser = userRepository.save(createdUser);
+        // set role for user
+        createdUser.setRole(user.getRole() != null ? user.getRole() : "ROLE_USER");
 
-        Authentication authentication = new UsernamePasswordAuthenticationToken(savedUser.getEmail(), savedUser.getPassword());
+        User savedUser = userRepository.save(createdUser);
+        cartService.createCart(savedUser);
+
+        List<GrantedAuthority> authorities = new ArrayList<>();
+        // grant authority
+        authorities.add(new SimpleGrantedAuthority(savedUser.getRole()));
+
+        Authentication authentication = new UsernamePasswordAuthenticationToken(savedUser.getEmail(), savedUser.getPassword(), authorities);
         SecurityContextHolder.getContext().setAuthentication((authentication));
 
         String token = jwtProvider.generateToken(authentication);

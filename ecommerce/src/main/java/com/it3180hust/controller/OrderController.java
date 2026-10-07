@@ -31,7 +31,7 @@ public class OrderController {
     @Autowired
     private UserService userService;
 
-    @PostMapping("/")
+    @PostMapping("")
     public ResponseEntity<Order>createOrder(@RequestBody Address shippingAddress,
             @RequestHeader("Authorization") String jwt) throws UserException{
         User user = userService.findUserProfileByJwt(jwt);
@@ -51,7 +51,7 @@ public class OrderController {
         return new ResponseEntity<>(orders,HttpStatus.CREATED);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{orderId}")
     public ResponseEntity<Order> findOrderById(@PathVariable Long orderId,
             @RequestHeader("Authorization") String jwt) throws UserException, OrderException{
         User user = userService.findUserProfileByJwt(jwt);

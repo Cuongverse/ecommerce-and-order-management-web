@@ -42,9 +42,10 @@ public class CartItemServiceImplementation implements CartItemService {
     public CartItem updateCartItem(Long userId, Long id, CartItem cartItems) throws CartItemException, UserException {
         CartItem item = findCartItemById(id);
         User user = userService.findUserById(userId);
-
-        if (user.getId().equals(userId)){
-            item.setQuantity(item.getQuantity());
+        
+        // check if the userID matches the userId from the item
+        if (item.getUserId().equals(userId)){
+            item.setQuantity(cartItems.getQuantity());
             item.setPrice(item.getQuantity()*item.getProduct().getPrice());
             item.setDiscountedPrice(item.getProduct().getDiscountedPrice()*item.getQuantity());
         }
@@ -70,7 +71,7 @@ public class CartItemServiceImplementation implements CartItemService {
         if (user.getId().equals(reqUser.getId())){
             cartItemRepository.deleteById(cartItemId);
         }
-        throw new UserException("Removing Error");
+        else throw new UserException("Removing Error");
     }
 
     @Override

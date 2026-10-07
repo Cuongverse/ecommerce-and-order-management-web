@@ -1,6 +1,7 @@
 package com.it3180hust.service;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -37,6 +38,7 @@ public class ProductServiceImplementation implements ProductService{
             Category topLevelCategory = new Category();
             topLevelCategory.setName(req.getTopLevelCategory());
             topLevelCategory.setLevel(1);
+            topLevel = categoryRepository.save(topLevelCategory);
         }
 
         Category secondLevel = categoryRepository.
@@ -45,7 +47,9 @@ public class ProductServiceImplementation implements ProductService{
             Category secondLevelCategory = new Category();
             secondLevelCategory.setName(req.getSecondLevelCategory());
             secondLevelCategory.setLevel(2);
+            secondLevel = categoryRepository.save(secondLevelCategory);
         }
+        secondLevel.setParentCategory(topLevel);
 
         Category thirdLevel = categoryRepository.
             findByNameAndParent(req.getThirdLevelCategory(), secondLevel.getName());
@@ -53,7 +57,9 @@ public class ProductServiceImplementation implements ProductService{
             Category thirdLevelCategory = new Category();
             thirdLevelCategory.setName(req.getThirdLevelCategory());
             thirdLevelCategory.setLevel(3);
+            thirdLevel = categoryRepository.save(thirdLevelCategory);
         }
+        thirdLevel.setParentCategory(secondLevel);
 
         Product product = new Product();
         product.setTitle(req.getTitle());
@@ -106,7 +112,7 @@ public class ProductServiceImplementation implements ProductService{
 
         List<Product> products = productRepository.filterProducts(category, minPrice, maxPrice, minDiscount, sort);
 
-        if (!colors.isEmpty()){
+        if (colors != null && !colors.isEmpty()){
             // lọc màu xem có sản phẩm nào trùng với màu được request không và sau đó tạo ra một list
             // VD: p1 red, p2 white, p3 yellow; cần lọc red, yellow --> tạo một list gồm các sản phẩm thỏa mãn [p1,p3]
             products = products.stream().filter(p-> colors.stream().anyMatch(c->c.equalsIgnoreCase(p.getColor())))
@@ -124,7 +130,7 @@ public class ProductServiceImplementation implements ProductService{
         int startIndex = (int) pageable.getOffset();
         int endIndex = Math.min(startIndex + pageable.getPageSize(), products.size());
 
-        List<Product> pageContent = products.subList(startIndex,endIndex);
+        List<Product> pageContent = (startIndex <= endIndex) ? products.subList(startIndex, endIndex) : Collections.emptyList();
 
         Page<Product> filteredProducts = new PageImpl<>(pageContent, pageable, products.size());
 
