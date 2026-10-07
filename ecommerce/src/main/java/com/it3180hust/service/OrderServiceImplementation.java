@@ -1,6 +1,7 @@
 package com.it3180hust.service;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
@@ -9,6 +10,7 @@ import com.it3180hust.model.Address;
 import com.it3180hust.model.Order;
 import com.it3180hust.model.User;
 import com.it3180hust.repository.CartRepository;
+import com.it3180hust.repository.OrderRepository;
 
 @Service 
 public class OrderServiceImplementation implements OrderService{
@@ -16,6 +18,7 @@ public class OrderServiceImplementation implements OrderService{
     private CartRepository cartRepository;
     private CartItemService cartItemService;
     private ProductService productService;
+    private OrderRepository orderRepository;
 
     public OrderServiceImplementation(CartRepository cartRepository, 
         CartItemService cartItemService,
@@ -27,7 +30,7 @@ public class OrderServiceImplementation implements OrderService{
 
     @Override
     public Order canceledOrder(Long orderId) throws OrderException {
-        // TODO Auto-generated method stub
+        
         return null;
     }
 
@@ -59,8 +62,11 @@ public class OrderServiceImplementation implements OrderService{
 
     @Override
     public Order findOrderById(Long orderId) throws OrderException {
-        // TODO Auto-generated method stub
-        return null;
+        Optional<Order> order = orderRepository.findById(orderId);
+        if(order.isPresent()){
+            return order.get();
+        }
+        throw new OrderException("Order Not Found With Id - " + orderId);
     }
 
     @Override
@@ -71,7 +77,10 @@ public class OrderServiceImplementation implements OrderService{
 
     @Override
     public Order placedOrder(long orderId) throws OrderException {
-        // TODO Auto-generated method stub
+        
+
+
+
         return null;
     }
 

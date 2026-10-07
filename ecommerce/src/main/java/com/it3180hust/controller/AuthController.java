@@ -102,7 +102,8 @@ public class AuthController {
         return new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
     }
 
-    @ExceptionHandler(BadCredentialsException.class)
+    @ExceptionHandler(BadCredentialsException.class) // báo spring hàm này xử lí exception
+    // liên quan tới BadCredentials
     public ResponseEntity<AuthResponse> handleBadCredentialsException(BadCredentialsException e){
         AuthResponse response = new AuthResponse();
         response.setMessage(e.getMessage()); // trả về 'invalid password' hoặc 'invalid username'

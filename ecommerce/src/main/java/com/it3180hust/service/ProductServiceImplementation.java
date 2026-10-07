@@ -21,13 +21,11 @@ import com.it3180hust.request.CreateProductRequest;
 public class ProductServiceImplementation implements ProductService{
 
     private ProductRepository productRepository;
-    private UserService userService;
     private CategoryRepostiory categoryRepository;
 
     public ProductServiceImplementation(ProductRepository productRepository, UserService userService,
     CategoryRepostiory categoryRepostiory){
         this.productRepository = productRepository;
-        this.userService = userService;
         this.categoryRepository = categoryRepostiory;
     }
     
@@ -97,11 +95,11 @@ public class ProductServiceImplementation implements ProductService{
         if(opt.isPresent()){
             return opt.get();
         }
-        throw new ProductException("Product Not Foudn With Id - " + id);
+        throw new ProductException("Product Not Found With Id - " + id);
     }
 
     @Override
-    public Page<Product> getAllProduct(String category, List<String> colors, List<String> sizes, Integer minPrice,
+    public Page<Product> getAllProducts(String category, List<String> colors, List<String> sizes, Integer minPrice,
             Integer maxPrice, Integer minDiscount, String sort, String stock, Integer pageNumber, Integer pageSize) {
         
         PageRequest pageable = PageRequest.of(pageNumber, pageSize);
@@ -144,6 +142,11 @@ public class ProductServiceImplementation implements ProductService{
         Product savedProduct = productRepository.save(product);
 
         return savedProduct;
+    }
+
+    @Override 
+    public List<Product> findAllProducts() {
+        return productRepository.findAll();
     }
     
 }
