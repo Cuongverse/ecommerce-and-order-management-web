@@ -20,6 +20,7 @@ import com.it3180hust.request.LoginRequest;
 import com.it3180hust.response.AuthResponse;
 import com.it3180hust.service.CustomUserServiceImplementation;
 
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PostMapping;
 
 
@@ -87,6 +88,7 @@ public class AuthController {
         return new ResponseEntity<AuthResponse>(authResponse,HttpStatus.CREATED);
     }
 
+    // the method that actually authenticates requests
     private Authentication authenticate(String username, String password){
         UserDetails userDetails = customUserService.loadUserByUsername(username);
         if (userDetails == null){
@@ -98,5 +100,13 @@ public class AuthController {
         }
 
         return new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+    }
+
+    @ExceptionHandler(BadCredentialsException.class) // báo spring hàm này xử lí exception
+    // liên quan tới BadCredentials
+    public ResponseEntity<AuthResponse> handleBadCredentialsException(BadCredentialsException e){
+        AuthResponse response = new AuthResponse();
+        response.setMessage(e.getMessage()); // trả về 'invalid password' hoặc 'invalid username'
+        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED); // trả về '401 Unauthorized'
     }
 }

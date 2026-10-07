@@ -3,3 +3,8 @@ workspace:
 cloudResources:
   globals:
     ../postman/globals/workspace.globals.yaml: 4d1f67d7-d790-490a-832e-ef391e38800a
+  collections:
+    ../postman/collections/Ecommerce API: 58640653-7efc4e2c-127d-4a57-bd2a-1dbdb009093d
+    ../postman/collections/New Collection: 58640653-9ce368b2-bfb7-4f58-bd42-df48dfc3bc44
+  environments:
+    ../postman/environments/Ecommerce Local.environment.yaml: 58640653-606c57d3-bad2-45cf-b0d2-6fe05cf85e9a

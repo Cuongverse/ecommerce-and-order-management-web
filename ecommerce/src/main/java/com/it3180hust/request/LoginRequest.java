@@ -5,7 +5,6 @@ public class LoginRequest {
     private String password;
 
     public LoginRequest(){
-
     }
 
     public String getEmail() {
@@ -20,6 +19,5 @@ public class LoginRequest {
     public void setPassword(String pasword) {
         this.password = pasword;
     }
-    
-    
+
 }
