@@ -91,7 +91,7 @@ public class ProductServiceImplementation implements ProductService{
     @Override
     public List<Product> findProductByCategory(String category) {
         
-        return null;
+        return productRepository.findProductByCategory(category);
     }
 
     @Override
@@ -143,6 +143,17 @@ public class ProductServiceImplementation implements ProductService{
 
         if (req.getQuantity() != 0){
             product.setQuantity(req.getQuantity());
+            product.setBrand(req.getBrand());
+            product.setCategory(req.getCategory());
+            product.setColor(req.getColor());
+            product.setDescription(req.getDescription());
+            product.setDiscountedPrice(req.getDiscountedPrice());
+            product.setImageUrl(req.getImageUrl());
+            product.setNumRatings(req.getNumRatings());
+            product.setSizes(req.getSizes());
+            product.setTitle(req.getTitle());
+            product.setReviews(req.getReviews());
+            product.setPrice(req.getPrice());
         }
 
         Product savedProduct = productRepository.save(product);
