@@ -1,0 +1,8 @@
+$kind: http-request
+description: ""
+url: "{{base_url}}/api/admin/products/creates"
+method: PUT
+body:
+  type: json
+  content: ""
+order: 11000

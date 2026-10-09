@@ -2,6 +2,8 @@ package com.it3180hust.model;
 
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -22,6 +24,7 @@ public class Rating {
     private User user;
 
     @ManyToOne(fetch=FetchType.LAZY)
+    @JsonIgnore 
     @JoinColumn (name="product_id",nullable=false)
     private Product product;
 

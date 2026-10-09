@@ -21,7 +21,7 @@ public class Review {
 
     @ManyToOne 
     @JoinColumn(name="product_id")
-    @JsonIgnore 
+    @JsonIgnore // không tạo thêm info cho json file --> không loop
     private Product product;
 
     @ManyToOne 

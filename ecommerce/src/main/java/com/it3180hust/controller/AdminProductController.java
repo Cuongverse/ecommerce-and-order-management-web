@@ -51,6 +51,8 @@ public class AdminProductController {
     @PutMapping("/{productId}/update")
     public ResponseEntity<Product> updateProduct(@RequestBody Product req,@PathVariable Long productId) throws ProductException{
         Product product = productService.updateProduct(productId, req);
+        ApiResponse res = new ApiResponse();
+        res.setStatus(true);
         return new ResponseEntity<Product>(product, HttpStatus.CREATED);
     }
 
@@ -61,6 +63,8 @@ public class AdminProductController {
         }
         ApiResponse res = new ApiResponse();
         res.setMessage("Products created successfully");
+        // set status về true nếu tạo thành công
+        res.setStatus(true);
         return new ResponseEntity<ApiResponse>(res,HttpStatus.CREATED);
     }
 }

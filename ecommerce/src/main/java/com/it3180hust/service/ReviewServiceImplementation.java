@@ -9,7 +9,6 @@ import com.it3180hust.exception.ProductException;
 import com.it3180hust.model.Product;
 import com.it3180hust.model.Review;
 import com.it3180hust.model.User;
-import com.it3180hust.repository.ProductRepository;
 import com.it3180hust.repository.ReviewRepository;
 import com.it3180hust.request.ReviewRequest;
 
@@ -18,17 +17,14 @@ public class ReviewServiceImplementation implements ReviewService {
 
     private ReviewRepository reviewRepository;
     private ProductService productService;
-    private ProductRepository productRepository;
 
-    public ReviewServiceImplementation(ReviewRepository reviewRepository, ProductService productService,
-            ProductRepository productRepository) {
+    // không để constructor default vì Spring sẽ gọi nó thay vì constructor này
+    // lí do: Khi Spring @Service có nhiều constructor mà không có @Autowired thì sẽ
+    // mặc định gọi constructor default 
+    public ReviewServiceImplementation(ReviewRepository reviewRepository, 
+                                    ProductService productService) {
         this.reviewRepository = reviewRepository;
         this.productService = productService;
-        this.productRepository = productRepository;
-    }
-
-    public ReviewServiceImplementation(){
-
     }
 
     @Override
@@ -39,7 +35,6 @@ public class ReviewServiceImplementation implements ReviewService {
         review.setReview(req.getReview());
         review.setUser(user);
         review.setProduct(product);
-        review.setId(req.getProductId());
         review.setCreatedAt(LocalDateTime.now());
         
         Review savedReview = reviewRepository.save(review);

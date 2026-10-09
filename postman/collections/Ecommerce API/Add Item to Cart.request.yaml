@@ -1,0 +1,8 @@
+$kind: http-request
+description: ""
+url: "{{base_url}}/api/cart/add"
+method: PUT
+body:
+  type: json
+  content: "{\r\n    \r\n}"
+order: 7000

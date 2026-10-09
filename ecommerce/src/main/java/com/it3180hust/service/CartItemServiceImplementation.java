@@ -11,21 +11,18 @@ import com.it3180hust.model.CartItem;
 import com.it3180hust.model.Product;
 import com.it3180hust.model.User;
 import com.it3180hust.repository.CartItemRepository;
-import com.it3180hust.repository.CartRepository;
 
 @Service 
 public class CartItemServiceImplementation implements CartItemService {
 
     private CartItemRepository cartItemRepository;
     private UserService userService;
-    private CartRepository cartRepository;
     
 
     public CartItemServiceImplementation(CartItemRepository cartItemRepository,
-            UserService userService, CartRepository cartRepository) {
+            UserService userService) {
         this.cartItemRepository = cartItemRepository;
         this.userService = userService;
-        this.cartRepository = cartRepository;
     }
 
     @Override

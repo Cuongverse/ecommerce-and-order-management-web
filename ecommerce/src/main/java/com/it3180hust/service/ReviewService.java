@@ -9,5 +9,6 @@ import com.it3180hust.request.ReviewRequest;
 
 public interface ReviewService {
     public Review createReview(ReviewRequest req, User user) throws ProductException;
+    
     public List<Review> getAllReview(Long productId);
 }
