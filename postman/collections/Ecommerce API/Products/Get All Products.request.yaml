@@ -1,48 +1,45 @@
 $kind: http-request
-name: 'Get All Products'
-order: 1000
+url: "{{base_url}}/api/products"
 method: GET
-url: '{{base_url}}/api/products'
 queryParams:
   - key: category
-    value: ''
+    value: ""
     disabled: true
-    description: 'Filter by category name'
+    description: Filter by category name
   - key: brand
-    value: ''
+    value: ""
     disabled: true
-    description: 'Filter by brand'
+    description: Filter by brand
   - key: color
-    value: ''
+    value: ""
     disabled: true
-    description: 'Filter by color'
+    description: Filter by color
   - key: minPrice
-    value: ''
+    value: ""
     disabled: true
-    description: 'Minimum price filter'
+    description: Minimum price filter
   - key: maxPrice
-    value: ''
+    value: ""
     disabled: true
-    description: 'Maximum price filter'
+    description: Maximum price filter
   - key: minDiscount
-    value: ''
+    value: ""
     disabled: true
-    description: 'Minimum discount percent'
+    description: Minimum discount percent
   - key: sort
-    value: ''
+    value: ""
     disabled: true
-    description: 'Sort field (e.g. price_low, price_high)'
+    description: Sort field (e.g. price_low, price_high)
   - key: pageNumber
-    value: '0'
+    value: "0"
     disabled: true
-    description: 'Page number (0-based)'
+    description: Page number (0-based)
   - key: pageSize
-    value: '10'
+    value: "10"
     disabled: true
-    description: 'Page size'
+    description: Page size
 scripts:
   - type: afterResponse
-    language: text/javascript
     code: |-
       pm.test("Status is 200 OK", function () {
           pm.response.to.have.status(200);
@@ -54,3 +51,5 @@ scripts:
               return Array.isArray(d) || (typeof d === "object" && d !== null);
           });
       });
+    language: text/javascript
+order: 1000

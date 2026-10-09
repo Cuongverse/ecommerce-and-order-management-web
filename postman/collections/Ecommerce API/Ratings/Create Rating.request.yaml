@@ -1,11 +1,8 @@
 $kind: http-request
-name: 'Create Rating'
-order: 1000
+url: "{{base_url}}/api/ratings/create"
 method: POST
-url: '{{base_url}}/api/ratings/create'
 headers:
-  - key: Content-Type
-    value: application/json
+  Content-Type: application/json
 body:
   type: json
   content: |-
@@ -15,7 +12,6 @@ body:
     }
 scripts:
   - type: afterResponse
-    language: text/javascript
     code: |-
       pm.test("Status is 200 OK or 201 Created", function () {
           pm.expect(pm.response.code).to.be.oneOf([200, 201]);
@@ -26,3 +22,5 @@ scripts:
           pm.expect(jsonData).to.have.property("rating");
           pm.expect(jsonData.rating).to.be.a("number");
       });
+    language: text/javascript
+order: 1000

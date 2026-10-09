@@ -5,7 +5,8 @@ description: |-
   The token is captured automatically after Sign Up or Login.
 order: 2000
 auth:
-  type: bearer
-  credentials:
-    - key: token
-      value: '{{jwt_token}}'
+  - id: c976872e-4a90-48e8-b2dd-be2570b2ee03
+    type: bearer
+    name: bearer auth
+    credentials:
+      token: "{{jwt_token}}"

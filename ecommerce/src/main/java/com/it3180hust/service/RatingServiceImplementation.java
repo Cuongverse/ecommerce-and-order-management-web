@@ -32,6 +32,7 @@ public class RatingServiceImplementation implements RatingService{
         rating.setUser(user);
         rating.setRating(req.getRating());
         rating.setCreatedAt(LocalDateTime.now());
+        product.setNumRatings(product.getNumRatings() + 1);
 
         Rating savedRating = ratingRepository.save(rating);
         return savedRating;
@@ -42,5 +43,3 @@ public class RatingServiceImplementation implements RatingService{
         return ratingRepository.getAllProductsRating(productId);
     }
 }
-    
-

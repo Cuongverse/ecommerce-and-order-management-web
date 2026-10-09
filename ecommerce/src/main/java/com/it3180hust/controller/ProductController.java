@@ -48,4 +48,11 @@ public class ProductController {
 
         return new ResponseEntity<>(product, HttpStatus.ACCEPTED);
     }
+
+    @GetMapping("/products/category/{categoryName}")
+    public ResponseEntity<List<Product>> findProductByCategoryHandler(@PathVariable String categoryName) throws ProductException{
+        List<Product> productList = productService.findProductByCategory(categoryName);
+
+        return new ResponseEntity<>(productList, HttpStatus.ACCEPTED);
+    }
 }

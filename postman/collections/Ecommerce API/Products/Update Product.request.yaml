@@ -1,15 +1,12 @@
 $kind: http-request
-name: 'Update Product'
-order: 4000
+url: "{{base_url}}/api/admin/products/:productId"
 method: PUT
-url: '{{base_url}}/api/admin/products/:productId'
+headers:
+  Content-Type: application/json
 pathVariables:
   - key: productId
-    value: '{{product_id}}'
-    description: 'ID of the product to update'
-headers:
-  - key: Content-Type
-    value: application/json
+    value: "{{product_id}}"
+    description: ID of the product to update
 body:
   type: json
   content: |-
@@ -25,7 +22,6 @@ body:
     }
 scripts:
   - type: afterResponse
-    language: text/javascript
     code: |-
       pm.test("Status is 200 OK", function () {
           pm.response.to.have.status(200);
@@ -35,3 +31,5 @@ scripts:
           var jsonData = pm.response.json();
           pm.expect(jsonData).to.have.property("id");
       });
+    language: text/javascript
+order: 4000

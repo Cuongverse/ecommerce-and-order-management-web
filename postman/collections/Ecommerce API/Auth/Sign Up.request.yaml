@@ -1,8 +1,6 @@
 $kind: http-request
-name: Sign Up
-order: 1000
-method: POST
 url: "{{base_url}}/auth/signup"
+method: POST
 headers:
   Content-Type: application/json
 body:
@@ -24,3 +22,5 @@ scripts:
       pm.test("Response time is less than 500ms", function () {
           pm.expect(pm.response.responseTime).to.be.below(500);
       });
+    language: text/javascript
+order: 1000

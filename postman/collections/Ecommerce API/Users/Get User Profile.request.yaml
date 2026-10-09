@@ -1,11 +1,8 @@
 $kind: http-request
-name: 'Get User Profile'
-order: 1000
+url: "{{base_url}}/api/users/profile"
 method: GET
-url: '{{base_url}}/api/users/profile'
 scripts:
   - type: afterResponse
-    language: text/javascript
     code: |-
       pm.test("Status is 200 OK", function () {
           pm.response.to.have.status(200);
@@ -34,3 +31,5 @@ scripts:
           pm.collectionVariables.set("user_id", String(jsonData.id));
           pm.environment.set("user_id", String(jsonData.id));
       }
+    language: text/javascript
+order: 1000

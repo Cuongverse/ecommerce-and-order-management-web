@@ -1,15 +1,12 @@
 $kind: http-request
-name: 'Get Product by ID'
-order: 2000
+url: "{{base_url}}/api/products/:productId"
 method: GET
-url: '{{base_url}}/api/products/:productId'
 pathVariables:
   - key: productId
-    value: '{{product_id}}'
-    description: 'ID of the product to retrieve'
+    value: "{{product_id}}"
+    description: ID of the product to retrieve
 scripts:
   - type: afterResponse
-    language: text/javascript
     code: |-
       pm.test("Status is 200 OK", function () {
           pm.response.to.have.status(200);
@@ -31,3 +28,5 @@ scripts:
           pm.expect(jsonData).to.have.property("price");
           pm.expect(jsonData.price).to.be.a("number");
       });
+    language: text/javascript
+order: 2000

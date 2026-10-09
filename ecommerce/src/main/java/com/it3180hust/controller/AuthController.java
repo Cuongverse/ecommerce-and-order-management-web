@@ -12,6 +12,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -107,23 +108,33 @@ public class AuthController {
 
     // the method that actually authenticates requests
     private Authentication authenticate(String username, String password){
-        UserDetails userDetails = customUserService.loadUserByUsername(username);
-        if (userDetails == null){
-            throw new BadCredentialsException("Invalid Username.");
+        UserDetails userDetails;
+        try {
+            userDetails = customUserService.loadUserByUsername(username);
+        } catch (UsernameNotFoundException e) {
+            throw new BadCredentialsException("Invalid Email or Password");
         }
 
         if(!passwordEncoder.matches(password, userDetails.getPassword())){
-            throw new BadCredentialsException("Invalid Password.");
+            throw new BadCredentialsException("Invalid Email or Password.");
         }
 
         return new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
     }
 
-    @ExceptionHandler(BadCredentialsException.class) // báo spring hàm này xử lí exception
+    @ExceptionHandler(BadCredentialsException.class) // báo spring hàm này xử lí BadCredentialsException
     // liên quan tới BadCredentials
     public ResponseEntity<AuthResponse> handleBadCredentialsException(BadCredentialsException e){
         AuthResponse response = new AuthResponse();
         response.setMessage(e.getMessage()); // trả về 'invalid password' hoặc 'invalid username'
         return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED); // trả về '401 Unauthorized'
+    }
+
+    // xử lí lỗi liên quan tới UserException
+    @ExceptionHandler(UserException.class)
+    public ResponseEntity<AuthResponse> handleUserException(UserException e){
+        AuthResponse response = new AuthResponse();
+        response.setMessage(e.getMessage());
+        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
     }
 }

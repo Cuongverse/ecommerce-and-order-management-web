@@ -1,11 +1,8 @@
 $kind: http-request
-name: 'Create Product'
-order: 3000
+url: "{{base_url}}/api/admin/products"
 method: POST
-url: '{{base_url}}/api/admin/products'
 headers:
-  - key: Content-Type
-    value: application/json
+  Content-Type: application/json
 body:
   type: json
   content: |-
@@ -31,7 +28,6 @@ body:
     }
 scripts:
   - type: afterResponse
-    language: text/javascript
     code: |-
       pm.test("Status is 201 Created or 200 OK", function () {
           pm.expect(pm.response.code).to.be.oneOf([200, 201]);
@@ -53,3 +49,5 @@ scripts:
           pm.collectionVariables.set("product_id", String(jsonData.id));
           pm.environment.set("product_id", String(jsonData.id));
       }
+    language: text/javascript
+order: 3000

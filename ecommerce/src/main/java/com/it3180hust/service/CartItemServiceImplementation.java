@@ -11,21 +11,18 @@ import com.it3180hust.model.CartItem;
 import com.it3180hust.model.Product;
 import com.it3180hust.model.User;
 import com.it3180hust.repository.CartItemRepository;
-import com.it3180hust.repository.CartRepository;
 
 @Service 
 public class CartItemServiceImplementation implements CartItemService {
 
     private CartItemRepository cartItemRepository;
     private UserService userService;
-    private CartRepository cartRepository;
     
 
     public CartItemServiceImplementation(CartItemRepository cartItemRepository,
-            UserService userService, CartRepository cartRepository) {
+            UserService userService) {
         this.cartItemRepository = cartItemRepository;
         this.userService = userService;
-        this.cartRepository = cartRepository;
     }
 
     @Override
@@ -41,13 +38,16 @@ public class CartItemServiceImplementation implements CartItemService {
     @Override
     public CartItem updateCartItem(Long userId, Long id, CartItem cartItems) throws CartItemException, UserException {
         CartItem item = findCartItemById(id);
-        User user = userService.findUserById(userId);
         
         // check if the userID matches the userId from the item
         if (item.getUserId().equals(userId)){
             item.setQuantity(cartItems.getQuantity());
             item.setPrice(item.getQuantity()*item.getProduct().getPrice());
             item.setDiscountedPrice(item.getProduct().getDiscountedPrice()*item.getQuantity());
+            item.setSize(cartItems.getSize());
+        }
+        else{
+            throw new UserException("You can't update another user's cart item");
         }
 
         CartItem createdCartItem = cartItemRepository.save(item);

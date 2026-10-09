@@ -32,6 +32,7 @@ public class JwtProvider{
     }
 
     public String getEmailFromToken(String jwt){
+        // exclude "Bearer " from token
         jwt = jwt.substring(7);
 
         Claims claims = Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(jwt).getBody();

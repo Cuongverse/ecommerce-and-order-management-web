@@ -1,10 +1,10 @@
 $kind: collection
 name: Reviews
-description: |-
-  Product review endpoints. Requires a valid JWT token.
+description: Product review endpoints. Requires a valid JWT token.
 order: 5000
 auth:
-  type: bearer
-  credentials:
-    - key: token
-      value: '{{jwt_token}}'
+  - id: fe6f2c2a-31b4-4234-ab93-70db6501ec29
+    type: bearer
+    name: bearer auth
+    credentials:
+      token: "{{jwt_token}}"
