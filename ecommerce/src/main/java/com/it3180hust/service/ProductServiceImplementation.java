@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -46,21 +47,21 @@ public class ProductServiceImplementation implements ProductService{
         if (secondLevel == null){
             Category secondLevelCategory = new Category();
             secondLevelCategory.setName(req.getSecondLevelCategory());
+            secondLevel.setParentCategory(topLevel);
             secondLevelCategory.setLevel(2);
             secondLevel = categoryRepository.save(secondLevelCategory);
         }
-        secondLevel.setParentCategory(topLevel);
 
         Category thirdLevel = categoryRepository.
             findByNameAndParent(req.getThirdLevelCategory(), secondLevel.getName());
         if (thirdLevel == null){
             Category thirdLevelCategory = new Category();
+            thirdLevel.setParentCategory(secondLevel);
             thirdLevelCategory.setName(req.getThirdLevelCategory());
             thirdLevelCategory.setLevel(3);
             thirdLevel = categoryRepository.save(thirdLevelCategory);
         }
-        thirdLevel.setParentCategory(secondLevel);
-
+        
         Product product = new Product();
         product.setTitle(req.getTitle());
         product.setColor(req.getColor());
@@ -138,28 +139,14 @@ public class ProductServiceImplementation implements ProductService{
     }
 
     @Override
-    public Product updateProduct(Long productId, Product req) throws ProductException {
-        Product product = findProductById(productId);
+public Product updateProduct(Long productId, Product req) throws ProductException {
+    Product product = findProductById(productId);
 
-        if (req.getQuantity() != 0){
-            product.setQuantity(req.getQuantity());
-            product.setBrand(req.getBrand());
-            product.setCategory(req.getCategory());
-            product.setColor(req.getColor());
-            product.setDescription(req.getDescription());
-            product.setDiscountedPrice(req.getDiscountedPrice());
-            product.setImageUrl(req.getImageUrl());
-            product.setNumRatings(req.getNumRatings());
-            product.setSizes(req.getSizes());
-            product.setTitle(req.getTitle());
-            product.setReviews(req.getReviews());
-            product.setPrice(req.getPrice());
-        }
+    // update only properties which are listed on the json file
+    BeanUtils.copyProperties(req, product, PropertyUtils.getIgnoredPropertyNames(req));
 
-        Product savedProduct = productRepository.save(product);
-
-        return savedProduct;
-    }
+    return productRepository.save(product);
+}
 
     @Override 
     public List<Product> findAllProducts() {

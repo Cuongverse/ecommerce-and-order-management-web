@@ -19,7 +19,7 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    @GetMapping("/profile/{userId}")
+    @GetMapping("/profile")
     public ResponseEntity<User> getUserProfileHandler(@PathVariable Long userId,
             @RequestHeader("Authorization") String jwt) throws UserException{
         User user = userService.findUserProfileByJwt(jwt);

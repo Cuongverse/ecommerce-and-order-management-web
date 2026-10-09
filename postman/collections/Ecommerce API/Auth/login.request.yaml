@@ -2,10 +2,9 @@ $kind: http-request
 name: Login
 order: 2000
 method: POST
-url: '{{base_url}}/auth/login'
+url: "{{base_url}}/auth/login"
 headers:
-  - key: Content-Type
-    value: application/json
+  Content-Type: application/json
 body:
   type: json
   content: |-
@@ -15,7 +14,6 @@ body:
     }
 scripts:
   - type: afterResponse
-    language: text/javascript
     code: |-
       pm.test("Status is 201 Created", function () {
           pm.response.to.have.status(201);
@@ -38,3 +36,4 @@ scripts:
           pm.collectionVariables.set("jwt_token", jsonData.jwt);
           pm.environment.set("jwt_token", jsonData.jwt);
       }
+    language: text/javascript

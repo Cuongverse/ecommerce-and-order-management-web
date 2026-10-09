@@ -1,15 +1,12 @@
 $kind: http-request
-name: 'Get Product Ratings'
-order: 2000
+url: "{{base_url}}/api/ratings/product/:productId"
 method: GET
-url: '{{base_url}}/api/ratings/product/:productId'
 pathVariables:
   - key: productId
-    value: '{{product_id}}'
-    description: 'ID of the product to get ratings for'
+    value: "{{product_id}}"
+    description: ID of the product to get ratings for
 scripts:
   - type: afterResponse
-    language: text/javascript
     code: |-
       pm.test("Status is 200 OK", function () {
           pm.response.to.have.status(200);
@@ -19,3 +16,5 @@ scripts:
           var jsonData = pm.response.json();
           pm.expect(jsonData).to.be.an("array");
       });
+    language: text/javascript
+order: 2000

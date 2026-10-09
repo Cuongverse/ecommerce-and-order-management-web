@@ -1,5 +1,0 @@
-$kind: http-request
-description: ""
-url: "{{base_url}}/api/cart"
-method: GET
-order: 6000

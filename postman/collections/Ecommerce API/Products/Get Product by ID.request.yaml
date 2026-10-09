@@ -1,12 +1,10 @@
 $kind: http-request
-name: Get Product by ID
-queryParams:
-  "": null
-order: 2000
+url: "{{base_url}}/api/products/:productId"
 method: GET
-url: "{{base_url}}/api/products/id/:productId?"
 pathVariables:
-  productId: "2"
+  - key: productId
+    value: "{{product_id}}"
+    description: ID of the product to retrieve
 scripts:
   - type: afterResponse
     code: |-
@@ -31,3 +29,4 @@ scripts:
           pm.expect(jsonData.price).to.be.a("number");
       });
     language: text/javascript
+order: 2000

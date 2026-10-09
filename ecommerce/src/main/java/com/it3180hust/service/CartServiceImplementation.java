@@ -7,6 +7,7 @@ import com.it3180hust.model.Cart;
 import com.it3180hust.model.CartItem;
 import com.it3180hust.model.Product;
 import com.it3180hust.model.User;
+import com.it3180hust.repository.CartItemRepository;
 import com.it3180hust.repository.CartRepository;
 import com.it3180hust.request.AddItemRequest;
 
@@ -16,6 +17,7 @@ public class CartServiceImplementation implements CartService {
     private CartRepository cartRepository;
     private CartItemService cartItemService;
     private ProductService productService;
+    private CartItemRepository cartItemRepository;
 
     
 
@@ -56,6 +58,12 @@ public class CartServiceImplementation implements CartService {
             CartItem createdCartItem = cartItemService.createCartItem(cartItem);
             cart.getCartItems().add(createdCartItem);
 
+        }
+        else{
+            isPresent.setQuantity(isPresent.getQuantity() + req.getQuantity());
+            isPresent.setPrice(isPresent.getQuantity() * product.getPrice());
+            isPresent.setDiscountedPrice(isPresent.getQuantity() * product.getDiscountedPrice());
+            cartItemRepository.save(isPresent);
         }
 
         return "Item Added to Cart";
