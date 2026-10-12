@@ -71,6 +71,19 @@ slider.addEventListener('mouseleave', startAuto);
 updateDots();
 startAuto();
 
+/* ---------- links to the product page ---------- */
+// "Disney+ Gift Card" -> "disney-gift-card"
+const slug = s => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
+// the clicked card's own info travels in the URL, so the product page can show it
+function productUrl(item) {
+    const q = new URLSearchParams({ id: item.id || slug(item.name), name: item.name });
+    ['price', 'rating', 'img'].forEach(k => {
+        if (item[k] != null && item[k] !== '') q.set(k, item[k]);
+    });
+    return 'products/products.html?' + q.toString();
+}
+
 /* ---------- product cards ---------- */
 const products = [
     { name: "VND Steam Wallet Việt Nam Gift Card", price: "420$", rating: 4.5, img: "product_images/testing.png" },
@@ -95,7 +108,7 @@ const productGrid = document.querySelector('.product-grid');
 
 function renderProducts(list) {
     productGrid.innerHTML = list.map(p => `
-        <a href="" class="product-card">
+        <a href="${productUrl(p)}" class="product-card">
             <img src="${p.img}" alt="${p.name}">
             <div class="product-info">
                 <h4>${p.name}</h4>
@@ -150,13 +163,9 @@ function applyFilters() {
     }
 }
 
-document.querySelectorAll('.filter-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        activeFilter = btn.dataset.filter;
-        applyFilters();
-    });
+document.getElementById('sort-select').addEventListener('change', e => {
+    activeFilter = e.target.value;
+    applyFilters();
 });
 
 // your navbar search box now works together with the filters
@@ -166,3 +175,86 @@ document.querySelector('.search-box input').addEventListener('input', e => {
 });
 
 applyFilters();
+
+/* ---------- deal-of-the-week + voucher cards -> product page ---------- */
+document.querySelectorAll('.deal-card, .voucher-item').forEach(card => {
+    const text = sel => { const el = card.querySelector(sel); return el ? el.textContent.trim() : ''; };
+    const img = card.querySelector('img');
+    const target = productUrl({
+        name:  text('h4'),
+        price: text('.new') || text('.price'),
+        img:   img ? img.getAttribute('src') : '',
+    });
+    if (card.tagName === 'A') {
+        card.href = target;
+    } else {
+        card.style.cursor = 'pointer';
+        card.addEventListener('click', () => { location.href = target; });
+    }
+});
+
+(function () {
+    const groups = [
+        { title: "Streaming", items: [
+            { id: "netflix", name: "Netflix Gift Card",     price: "$15 ~ $100", rating: 4.5, img: "product_images/testing.png" },
+            { id: "spotify", name: "Spotify Premium Card",  price: "$10 ~ $60",  rating: 4.5, img: "product_images/testing.png" },
+            { name: "Disney+ Gift Card",     price: "$25 ~ $100", rating: 4,   img: "product_images/testing.png" },
+        ]},
+        { title: "Shopping", items: [
+            { id: "amazon", name: "Amazon Gift Card",      price: "$10 ~ $500", rating: 5,   img: "product_images/testing.png" },
+            { name: "Google Play Gift Card", price: "$5 ~ $100",  rating: 4.5, img: "product_images/testing.png" },
+            { name: "Apple Gift Card",       price: "$10 ~ $200", rating: 4.5, img: "product_images/testing.png" },
+        ]},
+        { title: "Chat & Social", items: [
+            { name: "Discord Nitro",         price: "$10 ~ $100", rating: 4.5, img: "product_images/testing.png" },
+            { name: "Telegram Premium",      price: "$5 ~ $50",   rating: 4,   img: "product_images/testing.png" },
+            { name: "Twitch Gift Card",      price: "$10 ~ $100", rating: 4,   img: "product_images/testing.png" },
+        ]},
+        { title: "Software", items: [
+            { name: "Microsoft 365",         price: "$20 ~ $100", rating: 4.5, img: "product_images/testing.png" },
+            { name: "Adobe Creative Cloud",  price: "$30 ~ $300", rating: 4,   img: "product_images/testing.png" },
+            { name: "NordVPN Subscription",  price: "$15 ~ $120", rating: 4.5, img: "product_images/testing.png" },
+        ]},
+    ];
+
+    const svcTrack = document.querySelector('.services-track');
+
+    svcTrack.innerHTML = groups.map(g => `
+        <div class="svc-panel">
+            <div class="svc-panel-head">
+                <h3>${g.title}</h3>
+                <a href="" class="svc-more">View more</a>
+            </div>
+            ${g.items.map(i => `
+                <a href="${productUrl(i)}" class="svc-row">
+                    <img src="${i.img}" alt="${i.name}">
+                    <div class="svc-info">
+                        <h4>${i.name}</h4>
+                        <p class="svc-price">${i.price}</p>
+                        <div class="stars" style="--rating: ${i.rating}">★★★★★</div>
+                    </div>
+                </a>`).join('')}
+        </div>`).join('');
+
+    // slide one "page" (the visible width) at a time, looping at the ends
+    function slide(dir) {
+        const atEnd   = svcTrack.scrollLeft + svcTrack.clientWidth >= svcTrack.scrollWidth - 5;
+        const atStart = svcTrack.scrollLeft <= 5;
+        if (dir > 0 && atEnd)   return svcTrack.scrollTo({ left: 0, behavior: 'smooth' });
+        if (dir < 0 && atStart) return svcTrack.scrollTo({ left: svcTrack.scrollWidth, behavior: 'smooth' });
+        svcTrack.scrollBy({ left: dir * svcTrack.clientWidth, behavior: 'smooth' });
+    }
+
+    let svcTimer;
+    const start = () => { stop(); svcTimer = setInterval(() => slide(1), 6000); };
+    const stop  = () => clearInterval(svcTimer);
+
+    document.querySelector('.svc-next').addEventListener('click', () => { slide(1);  start(); });
+    document.querySelector('.svc-prev').addEventListener('click', () => { slide(-1); start(); });
+
+    const wrap = document.querySelector('.services-wrap');
+    wrap.addEventListener('mouseenter', stop);
+    wrap.addEventListener('mouseleave', start);
+
+    start();
+})();

@@ -136,15 +136,143 @@
 <!--The actual product-->
 <section class="products">
     <div class="small-container">
-        <h2 class="section-title">Featured Cards</h2>
-        <div class="filters">
-        <button class="filter-btn active" data-filter="suggested">Suggested</button>
-        <button class="filter-btn" data-filter="under">Under $50</button>
-        <button class="filter-btn" data-filter="above">Above $50</button>
-        <button class="filter-btn" data-filter="top">Top rated</button>
-        <button class="filter-btn" data-filter="low">Price: low to high</button>
+        <div class="section-head">
+            <h2 class="section-title">Featured Cards</h2>
+            <select class="sort-select" id="sort-select" aria-label="Sort products">
+                <option value="suggested">Default Sorting</option>
+                <option value="under">Under $50</option>
+                <option value="above">Above $50</option>
+                <option value="top">Top rated</option>
+                <option value="low">Price: low to high</option>
+            </select>
         </div>
         <div class="product-grid"></div>
+    </div>
+</section>
+
+<section class="other services">
+    <div class="small-container">
+        <div class="services-head">
+            <h2>Other Services</h2>
+            <a href="" class="view-all">View all &#10095;</a>
+        </div>
+
+        <div class="services-wrap">
+            <button class="svc-btn svc-prev" aria-label="Previous">&#10094;</button>
+            <div class="services-track"></div>
+            <button class="svc-btn svc-next" aria-label="Next">&#10095;</button>
+        </div>
+    </div>
+</section>
+
+<!--Voucher-->
+<section class="voucher-section">
+    <div class="section-head">
+        <h2>Voucher</h2>
+        <a href="" class="view-all">View all &#10095;</a>
+    </div>
+
+    <div class="voucher-grid">
+
+        <!-- panel 1 -->
+        <div class="voucher-panel">
+            <div class="panel-head">
+                <h3>Food &amp; Drink</h3>
+                <a href="" class="view-more">View more</a>
+            </div>
+
+            <div class="voucher-item">
+                <img src="images/voucher1.png" alt="">
+                <div class="info">
+                    <h4>Starbucks Voucher</h4>
+                    <p class="price">50,000&#8363; ~ 500,000&#8363;</p>
+                    <p class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</p>
+                </div>
+            </div>
+            <div class="voucher-item">
+                <img src="images/voucher2.png" alt="">
+                <div class="info">
+                    <h4>KFC Voucher</h4>
+                    <p class="price">50,000&#8363; ~ 300,000&#8363;</p>
+                    <p class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</p>
+                </div>
+            </div>
+            <div class="voucher-item">
+                <img src="images/voucher3.png" alt="">
+                <div class="info">
+                    <h4>Highlands Coffee</h4>
+                    <p class="price">30,000&#8363; ~ 200,000&#8363;</p>
+                    <p class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- panel 2 -->
+        <div class="voucher-panel">
+            <div class="panel-head">
+                <h3>Travel</h3>
+                <a href="" class="view-more">View more</a>
+            </div>
+
+            <div class="voucher-item">
+                <img src="images/voucher4.png" alt="">
+                <div class="info">
+                    <h4>Grab Voucher</h4>
+                    <p class="price">50,000&#8363; ~ 500,000&#8363;</p>
+                    <p class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</p>
+                </div>
+            </div>
+            <div class="voucher-item">
+                <img src="images/voucher5.png" alt="">
+                <div class="info">
+                    <h4>Agoda Voucher</h4>
+                    <p class="price">200,000&#8363; ~ 2,000,000&#8363;</p>
+                    <p class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</p>
+                </div>
+            </div>
+            <div class="voucher-item">
+                <img src="images/voucher6.png" alt="">
+                <div class="info">
+                    <h4>Traveloka Voucher</h4>
+                    <p class="price">100,000&#8363; ~ 1,000,000&#8363;</p>
+                    <p class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- panel 3 -->
+        <div class="voucher-panel">
+            <div class="panel-head">
+                <h3>Entertainment</h3>
+                <a href="" class="view-more">View more</a>
+            </div>
+
+            <div class="voucher-item">
+                <img src="images/voucher7.png" alt="">
+                <div class="info">
+                    <h4>CGV Cinema</h4>
+                    <p class="price">80,000&#8363; ~ 400,000&#8363;</p>
+                    <p class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</p>
+                </div>
+            </div>
+            <div class="voucher-item">
+                <img src="images/voucher8.png" alt="">
+                <div class="info">
+                    <h4>Lotte Cinema</h4>
+                    <p class="price">80,000&#8363; ~ 400,000&#8363;</p>
+                    <p class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</p>
+                </div>
+            </div>
+            <div class="voucher-item">
+                <img src="images/voucher9.png" alt="">
+                <div class="info">
+                    <h4>Karaoke Voucher</h4>
+                    <p class="price">100,000&#8363; ~ 600,000&#8363;</p>
+                    <p class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</p>
+                </div>
+            </div>
+        </div>
+
     </div>
 </section>
 
@@ -207,6 +335,6 @@
         </div>
     </div>
 </footer>
-<script src="script.js"></script> 
+<script src="site.js"></script> 
 </body>
 </html>
