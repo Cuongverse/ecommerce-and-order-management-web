@@ -1,6 +1,6 @@
 # HỆ THỐNG THƯƠNG MẠI ĐIỆN TỬ VÀ QUẢN TRỊ VẬN HÀNH KHO VẬN
-> **E-Commerce & Order Management System (OMS)**  
-> **Đồ án môn học:** Nhập môn Công nghệ Phần mềm (IT3150 / IT3080) – Đại học Bách khoa Hà Nội (HUST).
+> **E-Commerce & Order Management System**  
+> **Dự án môn học:** Nhập môn Công nghệ Phần mềm (IT3180) – Đại học Bách khoa Hà Nội (HUST).
 
 ---
 
@@ -15,7 +15,7 @@ Khác với các ứng dụng bán lẻ thông thường, dự án tập trung c
 
 ---
 
-## 2. PHÂN VAI HỆ THỐNG (ACTORS & RBAC)
+## 2. PHÂN VAI HỆ THỐNG
 
 Hệ thống được thiết kế theo mô hình kiểm soát truy cập dựa trên vai trò (**Role-Based Access Control - RBAC**):
 
@@ -84,13 +84,18 @@ Hệ thống được thiết kế theo mô hình kiểm soát truy cập dựa 
 ## 6. HƯỚNG DẪN CÀI ĐẶT & CHẠY THỬ (GETTING STARTED)
 
 ### 6.1. Yêu cầu môi trường
-* Node.js $\ge$ 18.x hoặc Java JDK $\ge$ 17 (tùy stack đã thống nhất).
-* Docker & Docker Compose (khuyến nghị dùng để khởi tạo Database nhanh chóng).
+* Node.js $\ge$ 18.x hoặc Java JDK $\ge$ 17.
+* Docker & Docker Compose.
 * Git.
 
 ### 6.2. Các bước khởi chạy cục bộ (Local Development)
 
 1. **Clone mã nguồn dự án:**
    ```bash
-   git clone <URL-repository-cua-nhom>
-   cd <thu-muc-du-an>
+   git clone https://github.com/Cuongverse/ecommerce-and-order-management-web.git
+   ```
+2. **Chuyển tới thư mục dự án và chạy:**
+  ```bash
+  cd ecommerce
+  (sẽ còn cập nhật thêm)
+  ```

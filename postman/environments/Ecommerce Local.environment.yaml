@@ -1,0 +1,14 @@
+name: Ecommerce Local
+values:
+  - key: base_url
+    value: 'http://localhost:5432'
+  - key: jwt_token
+    value: ''
+  - key: user_id
+    value: ''
+  - key: product_id
+    value: ''
+  - key: test_email
+    value: testuser@example.com
+  - key: test_password
+    value: password123
