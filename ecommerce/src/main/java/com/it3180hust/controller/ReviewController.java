@@ -40,7 +40,7 @@ public class ReviewController {
         return new ResponseEntity<>(review,HttpStatus.CREATED);
     }
 
-    @GetMapping("product/{productId}")
+    @GetMapping("/product/{productId}")
     public ResponseEntity<List<Review>> getProductsReview(@PathVariable Long productId, 
             @RequestHeader("Authorization") String jwt) throws UserException, ProductException{
         User user = userService.findUserProfileByJwt(jwt);

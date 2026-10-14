@@ -47,20 +47,20 @@ public class ProductServiceImplementation implements ProductService{
         if (secondLevel == null){
             Category secondLevelCategory = new Category();
             secondLevelCategory.setName(req.getSecondLevelCategory());
-            secondLevel.setParentCategory(topLevel);
             secondLevelCategory.setLevel(2);
             secondLevel = categoryRepository.save(secondLevelCategory);
         }
+        secondLevel.setParentCategory(topLevel);
 
         Category thirdLevel = categoryRepository.
             findByNameAndParent(req.getThirdLevelCategory(), secondLevel.getName());
         if (thirdLevel == null){
             Category thirdLevelCategory = new Category();
-            thirdLevel.setParentCategory(secondLevel);
             thirdLevelCategory.setName(req.getThirdLevelCategory());
             thirdLevelCategory.setLevel(3);
             thirdLevel = categoryRepository.save(thirdLevelCategory);
         }
+        thirdLevel.setParentCategory(secondLevel);
         
         Product product = new Product();
         product.setTitle(req.getTitle());
@@ -91,7 +91,6 @@ public class ProductServiceImplementation implements ProductService{
 
     @Override
     public List<Product> findProductByCategory(String category) {
-        
         return productRepository.findProductByCategory(category);
     }
 
@@ -139,7 +138,7 @@ public class ProductServiceImplementation implements ProductService{
     }
 
     @Override
-public Product updateProduct(Long productId, Product req) throws ProductException {
+    public Product updateProduct(Long productId, Product req) throws ProductException {
     Product product = findProductById(productId);
 
     // update only properties which are listed on the json file
@@ -153,4 +152,8 @@ public Product updateProduct(Long productId, Product req) throws ProductExceptio
         return productRepository.findAll();
     }
     
+    @Override
+    public List<Product> findProductByKeyword(String keyword){
+        return productRepository.findProductByKeyword(keyword);
+    }
 }

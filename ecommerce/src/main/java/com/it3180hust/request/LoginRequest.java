@@ -1,6 +1,9 @@
 package com.it3180hust.request;
 
+import jakarta.validation.constraints.Email;
+
 public class LoginRequest {
+    @Email 
     private String email;
     private String password;
 

@@ -23,4 +23,6 @@ public interface ProductService {
         String sort, String stock, Integer pageNumber, Integer pageSize);
 
     public List<Product> findAllProducts();
+
+    public List<Product> findProductByKeyword(String keyword);
 }

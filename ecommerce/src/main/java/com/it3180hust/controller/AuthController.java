@@ -129,12 +129,4 @@ public class AuthController {
         response.setMessage(e.getMessage()); // trả về 'invalid password' hoặc 'invalid username'
         return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED); // trả về '401 Unauthorized'
     }
-
-    // xử lí lỗi liên quan tới UserException
-    @ExceptionHandler(UserException.class)
-    public ResponseEntity<AuthResponse> handleUserException(UserException e){
-        AuthResponse response = new AuthResponse();
-        response.setMessage(e.getMessage());
-        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
-    }
 }
