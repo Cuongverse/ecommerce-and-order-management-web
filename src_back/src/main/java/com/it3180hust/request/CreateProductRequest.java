@@ -2,21 +2,38 @@ package com.it3180hust.request;
 
 import java.util.HashSet;
 import java.util.Set;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotEmpty;
 
 import com.it3180hust.model.Size;
 
 public class CreateProductRequest {
+    @NotBlank(message = "Title must not be blank!")
     private String title;
     private String description;
+
+    @NotBlank(message = "Top level category is required!")
     private String topLevelCategory;
+    
+    @NotBlank(message = "Second level category is required!")
     private String secondLevelCategory;
+
+    @NotBlank(message = "Third level category is required!")
     private String thirdLevelCategory;
+
+    @NotBlank(message = "Image URL is required!")
     private String imageUrl;
 
     private String brand;
     private String color;
 
+    @PositiveOrZero(message = "Price must be greater than or equal to 0!")
     private int price;
+
+    @PositiveOrZero(message = "Price must be greater than or equal to 0!")
     private int discountedPrice;
     private double discountedPercent;
     private int quantity;

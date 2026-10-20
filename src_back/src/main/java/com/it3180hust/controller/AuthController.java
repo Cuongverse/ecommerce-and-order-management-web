@@ -27,6 +27,8 @@ import com.it3180hust.response.AuthResponse;
 import com.it3180hust.service.CartService;
 import com.it3180hust.service.CustomUserServiceImplementation;
 
+import jakarta.validation.Valid;
+
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PostMapping;
 
@@ -93,7 +95,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")    
-    public ResponseEntity<AuthResponse> loginUserHandler(@RequestBody LoginRequest loginRequest){
+    public ResponseEntity<AuthResponse> loginUserHandler(@Valid @RequestBody LoginRequest loginRequest){
         String username = loginRequest.getEmail();
         String password = loginRequest.getPassword();
 

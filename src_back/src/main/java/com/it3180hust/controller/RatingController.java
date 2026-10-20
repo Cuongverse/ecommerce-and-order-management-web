@@ -16,39 +16,37 @@ import org.springframework.web.bind.annotation.RestController;
 import com.it3180hust.model.User;
 import com.it3180hust.exception.ProductException;
 import com.it3180hust.exception.UserException;
-import com.it3180hust.model.Review;
-import com.it3180hust.request.ReviewRequest;
-import com.it3180hust.service.ReviewService;
+import com.it3180hust.model.Rating;
+import com.it3180hust.request.RatingRequest;
+import com.it3180hust.service.RatingService;
 import com.it3180hust.service.UserService;
 
+import jakarta.validation.Valid;
+
 @RestController 
-@RequestMapping("/api/reviews")
-public class ReviewController {
+@RequestMapping("/api/ratings")
+public class RatingController {
     @Autowired 
     private UserService userService;
 
     @Autowired 
-    private ReviewService reviewService;
+    private RatingService ratingService;
 
     @PostMapping("/create")
-    public ResponseEntity<Review> createRating(@RequestBody ReviewRequest req,
+    public ResponseEntity<Rating> createRating(@Valid @RequestBody RatingRequest req,
             @RequestHeader("Authorization") String jwt) throws UserException, ProductException{
         User user = userService.findUserProfileByJwt(jwt);
 
-        Review review = reviewService.createReview(req, user);
+        Rating rating = ratingService.createRating(req, user);
         
-        return new ResponseEntity<>(review,HttpStatus.CREATED);
+        return new ResponseEntity<>(rating,HttpStatus.CREATED);
     }
 
     @GetMapping("/product/{productId}")
-    public ResponseEntity<List<Review>> getProductsReview(@PathVariable Long productId, 
-            @RequestHeader("Authorization") String jwt) throws UserException, ProductException{
-        User user = userService.findUserProfileByJwt(jwt);
+    public ResponseEntity<List<Rating>> getProductsRating(@PathVariable Long productId) throws UserException, ProductException{
 
-        List<Review> reviews = reviewService.getAllReview(productId);
+        List<Rating> ratings = ratingService.getProductsRating(productId);
 
-        return new ResponseEntity<>(reviews, HttpStatus.OK);
+        return new ResponseEntity<>(ratings, HttpStatus.OK);
     }
-
-
 }

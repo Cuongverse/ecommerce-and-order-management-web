@@ -20,6 +20,8 @@ import com.it3180hust.request.CreateProductRequest;
 import com.it3180hust.response.ApiResponse;
 import com.it3180hust.service.ProductService;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/api/admin/products")
 public class AdminProductController {
@@ -27,7 +29,7 @@ public class AdminProductController {
     private ProductService productService;
 
     @PostMapping("")
-    public ResponseEntity<Product> createProduct(@RequestBody CreateProductRequest req){
+    public ResponseEntity<Product> createProduct(@Valid @RequestBody CreateProductRequest req){
         Product product = productService.createProduct(req);
         return new ResponseEntity<Product>(product,HttpStatus.CREATED);
     }
