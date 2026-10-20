@@ -96,6 +96,7 @@ Hệ thống được thiết kế theo mô hình kiểm soát truy cập dựa 
    ```
 2. **Chuyển tới thư mục dự án và chạy:**
   ```bash
-  cd ecommerce
-  (sẽ còn cập nhật thêm)
+  // chạy backend
+  cd src_back
+  ./mvnw spring-boot:run
   ```

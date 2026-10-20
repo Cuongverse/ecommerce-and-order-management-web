@@ -21,6 +21,7 @@ import com.it3180hust.service.UserService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 
 @RestController 
 @RequestMapping("/api/cart")
@@ -43,7 +44,7 @@ public class CartController {
 
     @PutMapping("/add")
     @Operation(description = "add item to cart")
-    public ResponseEntity<ApiResponse> addItemToCart(@RequestBody AddItemRequest req,
+    public ResponseEntity<ApiResponse> addItemToCart(@Valid @RequestBody AddItemRequest req,
             @RequestHeader("Authorization") String jwt) throws UserException, ProductException{
         User user = userService.findUserProfileByJwt(jwt);
         cartService.addCartItem(user.getId(), req);

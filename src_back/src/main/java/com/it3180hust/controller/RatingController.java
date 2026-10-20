@@ -21,6 +21,8 @@ import com.it3180hust.request.RatingRequest;
 import com.it3180hust.service.RatingService;
 import com.it3180hust.service.UserService;
 
+import jakarta.validation.Valid;
+
 @RestController 
 @RequestMapping("/api/ratings")
 public class RatingController {
@@ -31,7 +33,7 @@ public class RatingController {
     private RatingService ratingService;
 
     @PostMapping("/create")
-    public ResponseEntity<Rating> createRating(@RequestBody RatingRequest req,
+    public ResponseEntity<Rating> createRating(@Valid @RequestBody RatingRequest req,
             @RequestHeader("Authorization") String jwt) throws UserException, ProductException{
         User user = userService.findUserProfileByJwt(jwt);
 
@@ -40,10 +42,8 @@ public class RatingController {
         return new ResponseEntity<>(rating,HttpStatus.CREATED);
     }
 
-    @GetMapping("product/{productId}")
-    public ResponseEntity<List<Rating>> getProductsRating(@PathVariable Long productId, 
-            @RequestHeader("Authorization") String jwt) throws UserException, ProductException{
-        User user = userService.findUserProfileByJwt(jwt);
+    @GetMapping("/product/{productId}")
+    public ResponseEntity<List<Rating>> getProductsRating(@PathVariable Long productId) throws UserException, ProductException{
 
         List<Rating> ratings = ratingService.getProductsRating(productId);
 

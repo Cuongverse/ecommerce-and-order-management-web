@@ -27,6 +27,8 @@ import com.it3180hust.response.AuthResponse;
 import com.it3180hust.service.CartService;
 import com.it3180hust.service.CustomUserServiceImplementation;
 
+import jakarta.validation.Valid;
+
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PostMapping;
 
@@ -93,7 +95,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")    
-    public ResponseEntity<AuthResponse> loginUserHandler(@RequestBody LoginRequest loginRequest){
+    public ResponseEntity<AuthResponse> loginUserHandler(@Valid @RequestBody LoginRequest loginRequest){
         String username = loginRequest.getEmail();
         String password = loginRequest.getPassword();
 
@@ -128,13 +130,5 @@ public class AuthController {
         AuthResponse response = new AuthResponse();
         response.setMessage(e.getMessage()); // trả về 'invalid password' hoặc 'invalid username'
         return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED); // trả về '401 Unauthorized'
-    }
-
-    // xử lí lỗi liên quan tới UserException
-    @ExceptionHandler(UserException.class)
-    public ResponseEntity<AuthResponse> handleUserException(UserException e){
-        AuthResponse response = new AuthResponse();
-        response.setMessage(e.getMessage());
-        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
     }
 }

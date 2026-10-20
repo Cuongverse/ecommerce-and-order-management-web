@@ -1,9 +1,12 @@
 package com.it3180hust.config;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -34,7 +37,21 @@ public class AppConfig{
 
             // Endpoint permissions
             .authorizeHttpRequests(auth -> auth
+                // Admin endpoints (requires ROLE_ADMIN)
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
+
+                // Public read-only endpoints
+                .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/reviews/product/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/ratings/product/**").permitAll()
+
+                // Logged in Users endpoints
+                .requestMatchers("/api/cart/**", "/api/cart_items/**").authenticated()
+                .requestMatchers("/api/orders/**").authenticated()
+                .requestMatchers("/api/users/**").authenticated()
+                .requestMatchers(HttpMethod.POST, "/api/ratings/**", "/api/reviews/**").authenticated()
+
+                // Any other API route requires authentication; non-API permitted
                 .requestMatchers("/api/**").authenticated()
                 .anyRequest().permitAll()
             );
@@ -50,10 +67,7 @@ public class AppConfig{
     @Bean 
     public CorsConfigurationSource corsConfigurationSource(){
         CorsConfiguration cfg = new CorsConfiguration();
-        // cfg.setAllowedOrigins(Arrays.asList(
-        //     "http://localhost:3000", // link của localhost react
-        //     "http://localhost:4300" // link của localhost angular
-        // ));
+        cfg.setAllowedOriginPatterns(List.of("*")); // allowed al origins dynamically with credentials
         cfg.setAllowedMethods(Collections.singletonList("*"));
         cfg.setAllowedHeaders(Collections.singletonList("*"));
         cfg.setExposedHeaders(Collections.singletonList("Authorization"));
