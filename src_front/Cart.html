@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cart | GiftCard</title>
+    <link rel="stylesheet" href="site.css">
+    <link rel="stylesheet" href="cart.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- ================= header (same as site.html) ================= -->
+<div class="header">
+    <div class="container">
+        <div class="navbar">
+            <div class="logo">
+                <a href="site.html"><img src="header_images/logo.png" width="250px" alt="GiftCards"></a>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="site.html">Home</a></li>
+                    <li><a href="site.html#featured">Gift Cards</a></li>
+                    <li><a href="site.html#vouchers">Vouchers</a></li>
+                    <li><a href="orders.html">My Orders</a></li>
+                    <li><a href="admin.html">Admin</a></li>
+                </ul>
+            </nav>
+
+            <div class="nav-actions">
+                <div class="search-box">
+                    <input type="text" placeholder="Search gift cards...">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <circle cx="11" cy="11" r="7"/>
+                        <line x1="16.5" y1="16.5" x2="21" y2="21"/>
+                    </svg>
+                </div>
+                <button class="icon-btn" aria-label="Cart">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="9" cy="20" r="1.5"/>
+                        <circle cx="18" cy="20" r="1.5"/>
+                        <path d="M2 3h3l2.5 12h11l2-8H6"/>
+                    </svg>
+                </button>
+                <button class="icon-btn" aria-label="Balance">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="9"/>
+                        <path d="M14.5 9.5c-.5-1-1.5-1.5-2.5-1.5-1.4 0-2.5.8-2.5 2s1 1.8 2.5 2 2.5.8 2.5 2-1.1 2-2.5 2c-1 0-2-.5-2.5-1.5M12 6v2M12 16v2"/>
+                    </svg>
+                </button>
+                <button class="avatar-btn" aria-label="Profile">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <circle cx="12" cy="8" r="4"/>
+                        <path d="M4 21c0-4 3.5-7 8-7s8 3 8 7"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ================= cart ================= -->
+<main class="ct-wrap">
+    <div class="ct-head">
+        <h1>Cart</h1>
+        <span id="ct-count"></span>
+    </div>
+
+    <!-- shown for: logged out, empty cart, load error -->
+    <div class="ct-state" id="ct-state"><p>Loading your cart...</p></div>
+
+    <div class="ct-layout" id="ct-layout" hidden>
+        <section class="ct-card">
+            <div id="ct-list"></div>
+            <p class="ct-error" id="ct-msg" role="alert"></p>
+        </section>
+
+        <aside class="ct-card ct-summary">
+            <div class="ct-row"><span>Original price</span><span id="ct-orig"></span></div>
+            <div class="ct-row"><span>Discount</span><span id="ct-save"></span></div>
+            <div class="ct-row ct-total"><span>Total</span><span id="ct-total"></span></div>
+            <a href="checkout.html" class="ct-btn primary">Checkout</a>
+        </aside>
+    </div>
+</main>
+
+<footer class="footer ct-footer">
+    <div class="container">
+        <div class="footer-bottom">
+            <p>&copy; 2026 GiftCards. All rights reserved.</p>
+        </div>
+    </div>
+</footer>
+
+<script src="api.js"></script>
+<script>
+const $ = sel => document.querySelector(sel);
+const money = n => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n);
+const esc = s => String(s).replace(/[&<>"']/g, c => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+));
+
+// full link as-is, or a file name inside product_images/
+const imageFor = url => !url ? 'product_images/testing.png'
+    : /^(https?:|data:|\/)/.test(url) ? url : 'product_images/' + url;
+
+// the backend stores price and discountedPrice per LINE (unit price x quantity)
+const lineOriginal = i => i.price || 0;
+const lineTotal = i => i.discountedPrice > 0 ? i.discountedPrice : lineOriginal(i);
+
+const MAX_QTY = 10;
+let items = [];
+let busy = false;
+
+function showState(html) {
+    $('#ct-state').innerHTML = html;
+    $('#ct-state').hidden = false;
+    $('#ct-layout').hidden = true;
+}
+
+async function loadCart() {
+    if (!Auth.isLoggedIn()) {
+        showState(`<p>Log in to see your cart.</p>
+                   <a class="ct-btn primary" href="auth.html?next=${encodeURIComponent(location.href)}">Log in</a>`);
+        return;
+    }
+    try {
+        const cart = await apiFetch('/api/cart');
+        items = Array.from(cart.cartItems || []).sort((a, b) => a.id - b.id);   // keep a stable order
+        render();
+    } catch (err) {
+        showState(`<p class="ct-error">${esc(err.message)}</p>`);
+    }
+}
+
+function render() {
+    if (!items.length) {
+        $('#ct-count').textContent = '';
+        showState(`<p>Your cart is empty.</p><a class="ct-btn primary" href="site.html">Browse gift cards</a>`);
+        return;
+    }
+
+    $('#ct-state').hidden = true;
+    $('#ct-layout').hidden = false;
+
+    const count = items.reduce((n, i) => n + i.quantity, 0);
+    $('#ct-count').textContent = count + (count === 1 ? ' item' : ' items');
+
+    $('#ct-list').innerHTML = items.map(i => {
+        const p = i.product || {};
+        const unit = lineTotal(i) / i.quantity;
+        const oldUnit = lineOriginal(i) / i.quantity;
+        return `
+        <div class="ct-item">
+            <img src="${esc(imageFor(p.imageUrl))}" alt="${esc(p.title || '')}"
+                 onerror="this.onerror=null;this.src='product_images/testing.png'">
+            <div class="ct-name">
+                <h4>${esc(p.title || 'Product')}</h4>
+                ${i.size ? `<small>Option: ${esc(i.size)}</small>` : ''}
+            </div>
+            <div class="ct-unit">${money(unit)}${oldUnit > unit ? `<s>${money(oldUnit)}</s>` : ''}</div>
+            <div class="ct-stepper">
+                <button type="button" data-act="minus" data-id="${i.id}" aria-label="Decrease" ${i.quantity <= 1 ? 'disabled' : ''}>−</button>
+                <span>${i.quantity}</span>
+                <button type="button" data-act="plus" data-id="${i.id}" aria-label="Increase" ${i.quantity >= MAX_QTY ? 'disabled' : ''}>+</button>
+            </div>
+            <div class="ct-line">${money(lineTotal(i))}</div>
+            <button type="button" class="ct-del" data-act="del" data-id="${i.id}" aria-label="Remove">🗑</button>
+        </div>`;
+    }).join('');
+
+    // totals are worked out from the lines, so they always match what is on screen
+    const original = items.reduce((s, i) => s + lineOriginal(i), 0);
+    const total = items.reduce((s, i) => s + lineTotal(i), 0);
+    $('#ct-orig').textContent = money(original);
+    $('#ct-save').textContent = money(original - total);
+    $('#ct-total').textContent = money(total);
+}
+
+// one listener for every + / - / delete button
+$('#ct-list').addEventListener('click', async e => {
+    const btn = e.target.closest('button[data-act]');
+    if (!btn || busy) return;
+    const item = items.find(i => String(i.id) === btn.dataset.id);
+    if (!item) return;
+
+    busy = true;
+    $('#ct-msg').textContent = '';
+    try {
+        if (btn.dataset.act === 'del') {
+            await apiFetch('/api/cart_items/delete/' + item.id, { method: 'DELETE' });
+        } else {
+            const quantity = item.quantity + (btn.dataset.act === 'plus' ? 1 : -1);
+            // the backend overwrites size with whatever we send, so send the current one back
+            await apiFetch('/api/cart_items/update/' + item.id, { method: 'PUT', body: { quantity, size: item.size } });
+        }
+        await loadCart();
+    } catch (err) {
+        $('#ct-msg').textContent = err.message;
+    }
+    busy = false;
+});
+
+loadCart();
+</script>
+</body>
+</html>
