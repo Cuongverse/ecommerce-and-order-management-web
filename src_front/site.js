@@ -84,42 +84,139 @@ function productUrl(item) {
     return 'products/products.html?' + q.toString();
 }
 
-/* ---------- product cards ---------- */
-const products = [
-    { name: "VND Steam Wallet Việt Nam Gift Card", price: "420$", rating: 4.5, img: "product_images/testing.png" },
-    { name: "USD Steam Wallet Card Order",         price: "67$",  rating: 4.5, img: "product_images/testing.png" },
-    { name: "Euro Steam Wallet Gift Card",         price: "99$",  rating: 1.0, img: "product_images/testing.png" },
-    { name: "PUBG PC Pass Steam",                  price: "30$",  rating: 4.5, img: "product_images/testing.png" },
-    { name: "Random Steam Game Code",              price: "9$",   rating: 2.0, img: "product_images/testing.png" },
-    { name: "Where Winds Meet Top-up",             price: "25$",  rating: 4.5, img: "product_images/testing.png" },
-    { name: "Fuckass cards",                       price: "67$",  rating: 3.35,img: "product_images/testing.png" },
-    { name: "Fuckass cards",                       price: "67$",  rating: 3.35,img: "product_images/testing.png" },
-    { name: "Fuckass cards",                       price: "67$",  rating: 3.35,img: "product_images/testing.png" },
-    { name: "Fuckass cards",                       price: "67$",  rating: 3.35,img: "product_images/testing.png" },
-    { name: "Fuckass cards",                       price: "67$",  rating: 3.35,img: "product_images/testing.png" },
-    { name: "Fuckass cards",                       price: "67$",  rating: 3.35,img: "product_images/testing.png" },
-    { name: "Fuckass cards",                       price: "67$",  rating: 3.35,img: "product_images/testing.png" },
-    { name: "Fuckass cards",                       price: "67$",  rating: 3.35,img: "product_images/testing.png" },
-    { name: "Fuckass cards",                       price: "67$",  rating: 3.35,img: "product_images/testing.png" },
-    { name: "Fuckass cards",                       price: "67$",  rating: 3.35,img: "product_images/testing.png" },
+/* =========================================================
+   PRODUCT CARDS - loaded from the backend (GET /api/products)
+   ========================================================= */
+
+// Under / Above filter splits at this price
+const PRICE_SPLIT = 50;
+
+// While the backend is not running, show a few sample cards so the page still looks alive.
+// Set to false when the backend works, or delete SAMPLE_PRODUCTS completely.
+const SHOW_SAMPLE_WHEN_OFFLINE = true;
+
+const SAMPLE_PRODUCTS = [
+    { id: "netflix", name: "Netflix Gift Card",    price: 15,  rating: 4.5, img: "product_images/testing.png" },
+    { id: "spotify", name: "Spotify Premium Card", price: 10,  rating: 4.5, img: "product_images/testing.png" },
+    { id: "amazon",  name: "Amazon Gift Card",     price: 49,  rating: 5,   img: "product_images/testing.png" },
+    { id: "steam-usd", name: "Steam Wallet Card - USD", price: 67, rating: 3.5, img: "product_images/testing.png" },
 ];
 
 const productGrid = document.querySelector('.product-grid');
 
+const money = n => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n);
+
+// product names come from the database, so escape them before putting them in HTML
+const esc = s => String(s).replace(/[&<>"']/g, c => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+));
+
+// the backend has no "average rating" field, so we work it out from the list of ratings
+function averageRating(p) {
+    const list = p.ratings || [];
+    if (!list.length) return 0;
+    return list.reduce((sum, r) => sum + r.rating, 0) / list.length;
+}
+
+// translate a backend product (title, discountedPrice, imageUrl...) into what our cards use
+function fromBackend(p) {
+    return {
+        id: p.id,
+        name: p.title,
+        price: p.discountedPrice > 0 ? p.discountedPrice : p.price,
+        rating: averageRating(p),
+        img: p.imageUrl || 'product_images/testing.png',
+    };
+}
+
+let allProducts = [];
+let usingSample = false;
+let activeFilter = 'suggested';
+let searchText = '';
+
+// small message line above the grid (errors, "sample data" notice)
+const notice = document.createElement('p');
+notice.style.cssText = 'text-align:center; margin-bottom:16px; font-size:14px;';
+productGrid.before(notice);
+
 function renderProducts(list) {
     productGrid.innerHTML = list.map(p => `
-        <a href="${productUrl(p)}" class="product-card">
-            <img src="${p.img}" alt="${p.name}">
+        <a href="${esc(productUrl(p))}" class="product-card">
+            <img src="${esc(p.img)}" alt="${esc(p.name)}" onerror="this.onerror=null;this.src='product_images/testing.png'">
             <div class="product-info">
-                <h4>${p.name}</h4>
-                <p class="price">${p.price}</p>
+                <h4>${esc(p.name)}</h4>
+                <p class="price">${money(p.price)}</p>
                 <div class="stars" style="--rating: ${p.rating}">★★★★★</div>
             </div>
         </a>
     `).join('');
 }
 
-renderProducts(products);
+// the sort menu decides what we ask the backend for
+function buildQuery() {
+    const q = new URLSearchParams({ pageNumber: 0, pageSize: 100 });
+    if (activeFilter === 'under') q.set('maxPrice', PRICE_SPLIT - 1);
+    if (activeFilter === 'above') q.set('minPrice', PRICE_SPLIT);
+    if (activeFilter === 'low')   q.set('sort', 'price_low');
+    return q.toString();
+}
+
+async function loadProducts() {
+    productGrid.innerHTML = '<p class="no-results">Loading...</p>';
+    notice.textContent = '';
+    usingSample = false;
+
+    try {
+        const page = await apiFetch('/api/products?' + buildQuery());
+        allProducts = page.content.map(fromBackend);       // Spring wraps the list in "content"
+    } catch (err) {
+        console.warn('Could not load products:', err.message);
+        if (SHOW_SAMPLE_WHEN_OFFLINE) {
+            usingSample = true;
+            allProducts = SAMPLE_PRODUCTS;
+            notice.style.color = '#ffc107';
+            notice.textContent = 'Showing sample products: ' + err.message;
+        } else {
+            allProducts = [];
+            notice.style.color = '#ff7a6b';
+            notice.textContent = err.message;
+        }
+    }
+    showProducts();
+}
+
+// search and "Top rated" are done here, because the backend has no endpoint for them
+function showProducts() {
+    let list = allProducts.filter(p => p.name.toLowerCase().includes(searchText));
+
+    if (usingSample) {   // sample data did not go through the backend, so filter it here
+        if (activeFilter === 'under') list = list.filter(p => p.price < PRICE_SPLIT);
+        if (activeFilter === 'above') list = list.filter(p => p.price >= PRICE_SPLIT);
+        if (activeFilter === 'low')   list = [...list].sort((a, b) => a.price - b.price);
+    }
+    if (activeFilter === 'top') {
+        list = list.filter(p => p.rating >= 4).sort((a, b) => b.rating - a.rating);
+    }
+
+    if (list.length === 0) {
+        productGrid.innerHTML = '<p class="no-results">No cards found 😕</p>';
+    } else {
+        renderProducts(list);
+    }
+}
+
+document.getElementById('sort-select').addEventListener('change', e => {
+    activeFilter = e.target.value;
+    loadProducts();
+});
+
+// the navbar search box filters the list as you type
+document.querySelector('.search-box input').addEventListener('input', e => {
+    searchText = e.target.value.toLowerCase();
+    showProducts();
+});
+
+loadProducts();
 
 /* ---------- deal countdown ---------- */
 function endOfWeek() {
@@ -140,43 +237,7 @@ function tickCountdown() {
 tickCountdown();
 setInterval(tickCountdown, 1000);
 
-/* ---------- filters + search ---------- */
-const filters = {
-    suggested: list => list,
-    under:     list => list.filter(p => parseFloat(p.price) < 50),
-    above:     list => list.filter(p => parseFloat(p.price) >= 50),
-    top:       list => list.filter(p => p.rating >= 4).sort((a, b) => b.rating - a.rating),
-    low:       list => [...list].sort((a, b) => parseFloat(a.price) - parseFloat(b.price)),
-};
-
-let activeFilter = 'suggested';
-let searchText = '';
-
-function applyFilters() {
-    const searched = products.filter(p => p.name.toLowerCase().includes(searchText));
-    const result = filters[activeFilter](searched);
-
-    if (result.length === 0) {
-        productGrid.innerHTML = '<p class="no-results">No cards found 😕</p>';
-    } else {
-        renderProducts(result);
-    }
-}
-
-document.getElementById('sort-select').addEventListener('change', e => {
-    activeFilter = e.target.value;
-    applyFilters();
-});
-
-// your navbar search box now works together with the filters
-document.querySelector('.search-box input').addEventListener('input', e => {
-    searchText = e.target.value.toLowerCase();
-    applyFilters();
-});
-
-applyFilters();
-
-/* ---------- deal-of-the-week + voucher cards -> product page ---------- */
+/* deal-of-the-week + voucher cards -> product page  */
 document.querySelectorAll('.deal-card, .voucher-item').forEach(card => {
     const text = sel => { const el = card.querySelector(sel); return el ? el.textContent.trim() : ''; };
     const img = card.querySelector('img');
