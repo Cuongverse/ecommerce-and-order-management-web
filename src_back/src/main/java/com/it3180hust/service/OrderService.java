@@ -8,7 +8,7 @@ import com.it3180hust.model.Order;
 import com.it3180hust.model.User;
 
 public interface OrderService {
-    public Order createOrder(User user, Address shippingAddress);
+    public Order createOrder(User user, Address shippingAddress) throws OrderException;
 
     public Order findOrderById(Long orderId) throws OrderException;
 
