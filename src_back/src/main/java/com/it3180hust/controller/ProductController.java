@@ -1,0 +1,66 @@
+package com.it3180hust.controller;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.it3180hust.exception.ProductException;
+import com.it3180hust.model.Product;
+import com.it3180hust.service.ProductService;
+
+@RestController 
+@RequestMapping("/api")
+public class ProductController {
+    @Autowired
+    private ProductService productService;
+
+    @GetMapping("/products")
+    public ResponseEntity<Page<Product>> findProductByCategoryHandler(
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) List<String> color,
+            @RequestParam(required = false) List<String> size,
+            @RequestParam(required = false) Integer minPrice,
+            @RequestParam(required = false) Integer maxPrice,
+            @RequestParam(required = false) Integer minDiscount,
+            @RequestParam(required = false) String sort,
+            @RequestParam(required = false) String stock,
+            @RequestParam(defaultValue = "0") Integer pageNumber,
+            @RequestParam(defaultValue = "10") Integer pageSize) {
+        
+        Page<Product> res = productService.getAllProducts(category, color, size, 
+                                                        minPrice, maxPrice, minDiscount, sort, 
+                                                        stock, pageNumber, pageSize);
+        System.out.println("Complete products");
+        return new ResponseEntity<>(res, HttpStatus.ACCEPTED);
+    }   
+
+    @GetMapping("/products/id/{productId}")
+    public ResponseEntity<Product> findProductByIdHandler(@PathVariable Long productId) throws ProductException{
+        Product product = productService.findProductById(productId);
+
+        return new ResponseEntity<>(product, HttpStatus.ACCEPTED);
+    }
+
+    @GetMapping("/products/category/{categoryName}")
+    public ResponseEntity<List<Product>> findProductByCategoryHandler(@PathVariable String categoryName) throws ProductException{
+        List<Product> productList = productService.findProductByCategory(categoryName);
+
+        return new ResponseEntity<>(productList, HttpStatus.ACCEPTED);
+    }
+
+    @GetMapping("/products/search")
+    public ResponseEntity<List<Product>> searchProducts(@RequestParam("q") String keyword) {
+        List<Product> productList = productService.findProductByKeyword(keyword);
+
+        return new ResponseEntity<>(productList, HttpStatus.OK);
+    }
+    
+}
