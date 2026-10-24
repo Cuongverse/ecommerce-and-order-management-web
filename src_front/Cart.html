@@ -103,8 +103,11 @@ const esc = s => String(s).replace(/[&<>"']/g, c => (
 ));
 
 // full link as-is, or a file name inside product_images/
-const imageFor = url => !url ? 'product_images/testing.png'
-    : /^(https?:|data:|\/)/.test(url) ? url : 'product_images/' + url;
+const imageFor = url => {
+    if (!url) return 'product_images/testing.png';
+    if (/^(https?:|data:|\/)/.test(url)) return url;
+    return url.startsWith('product_images/') ? url : 'product_images/' + url;
+};
 
 // the backend stores price and discountedPrice per LINE (unit price x quantity)
 const lineOriginal = i => i.price || 0;

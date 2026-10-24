@@ -119,13 +119,20 @@ function averageRating(p) {
 }
 
 // translate a backend product (title, discountedPrice, imageUrl...) into what our cards use
+// imageUrl from the backend is either a full https:// link, or just a file name inside product_images/
+const imageFromBackend = url => {
+    if (!url) return 'product_images/testing.png';
+    if (/^(https?:|data:|\/)/.test(url)) return url;
+    return url.startsWith('product_images/') ? url : 'product_images/' + url;
+};
+
 function fromBackend(p) {
     return {
         id: p.id,
         name: p.title,
         price: p.discountedPrice > 0 ? p.discountedPrice : p.price,
         rating: averageRating(p),
-        img: p.imageUrl || 'product_images/testing.png',
+        img: imageFromBackend(p.imageUrl),
     };
 }
 
@@ -237,7 +244,7 @@ function tickCountdown() {
 tickCountdown();
 setInterval(tickCountdown, 1000);
 
-/* deal-of-the-week + voucher cards -> product page  */
+/* ---------- deal-of-the-week + voucher cards -> product page ---------- */
 document.querySelectorAll('.deal-card, .voucher-item').forEach(card => {
     const text = sel => { const el = card.querySelector(sel); return el ? el.textContent.trim() : ''; };
     const img = card.querySelector('img');
