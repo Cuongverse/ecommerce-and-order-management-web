@@ -48,6 +48,13 @@ public class AdminOrderController {
         return new ResponseEntity<>(order, HttpStatus.OK);
     }
 
+    // 3. Bổ sung endpoint deliver còn thiếu
+    @PutMapping("/{orderId}/deliver")
+    public ResponseEntity<Order> deliveredOrderHandler(@PathVariable Long orderId) throws OrderException {
+        Order order = orderService.deliveredOrder(orderId);
+        return new ResponseEntity<>(order, HttpStatus.ACCEPTED);
+    }
+
     @PutMapping("/{orderId}/cancel")
     public ResponseEntity<Order> CancelOrderHandler(@PathVariable Long orderId,
             @RequestHeader("Authorization") String jwt) throws OrderException {
@@ -63,7 +70,7 @@ public class AdminOrderController {
 
         ApiResponse res = new ApiResponse();
         res.setMessage("Order Deleted Successfully");
-        // res.setStatus(true);
+        res.setStatus(true); // <--- Bật dòng này lên để trả về trạng thái true (thành công)
 
         return new ResponseEntity<>(res, HttpStatus.OK);
     }

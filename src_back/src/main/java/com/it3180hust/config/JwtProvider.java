@@ -18,6 +18,7 @@ public class JwtProvider{
     SecretKey key = Keys.hmacShaKeyFor(JwtConstant.SECRET_KEY.getBytes());
 
     public String generateToken(Authentication auth){
+        @SuppressWarnings("null")
         String authorities = auth.getAuthorities().stream()
                             .map(GrantedAuthority::getAuthority)
                             .collect(Collectors.joining(","));

@@ -14,10 +14,13 @@ import com.it3180hust.model.CartItem;
 import com.it3180hust.model.Order;
 import com.it3180hust.model.OrderItem;
 import com.it3180hust.model.PaymentDetails;
+import com.it3180hust.model.Product;
 import com.it3180hust.model.User;
 import com.it3180hust.repository.AddressRepository;
+import com.it3180hust.repository.CartRepository;
 import com.it3180hust.repository.OrderItemRepository;
 import com.it3180hust.repository.OrderRepository;
+import com.it3180hust.repository.ProductRepository;
 import com.it3180hust.repository.UserRepository;
 
 @Service 
@@ -25,24 +28,30 @@ public class OrderServiceImplementation implements OrderService {
 
     private OrderRepository orderRepository;
     private CartService cartService;
+    private CartRepository cartRepository;
     private AddressRepository addressRepository;
     private UserRepository userRepository;
     private OrderItemRepository orderItemRepository;
+    private ProductRepository productRepository;
 
     public OrderServiceImplementation(OrderRepository orderRepository,
             CartService cartService,
+            CartRepository cartRepository,
             AddressRepository addressRepository,
             UserRepository userRepository,
-            OrderItemRepository orderItemRepository) {
+            OrderItemRepository orderItemRepository,
+            ProductRepository productRepository) {
         this.orderRepository = orderRepository;
         this.cartService = cartService;
+        this.cartRepository = cartRepository;
         this.addressRepository = addressRepository;
         this.userRepository = userRepository;
         this.orderItemRepository = orderItemRepository;
+        this.productRepository = productRepository;
     }
 
     @Override
-    public Order createOrder(User user, Address shippingAddress) {
+    public Order createOrder(User user, Address shippingAddress) throws OrderException {
         shippingAddress.setUser(user);
         Address address = addressRepository.save(shippingAddress);
         user.getAddress().add(address);
@@ -52,9 +61,20 @@ public class OrderServiceImplementation implements OrderService {
         List<OrderItem> orderItems = new ArrayList<>();
 
         for (CartItem item : cart.getCartItems()) {
+            Product product = item.getProduct();
+            
+            // 1. Kiểm tra tồn kho trước khi đặt hàng
+            if (product.getQuantity() < item.getQuantity()) {
+                throw new OrderException("Product " + product.getTitle() + " is out of stock (available: " + product.getQuantity() + ")");
+            }
+
+            // Trừ số lượng tồn kho
+            product.setQuantity(product.getQuantity() - item.getQuantity());
+            productRepository.save(product);
+
             OrderItem orderItem = new OrderItem();
             orderItem.setPrice(item.getPrice());
-            orderItem.setProduct(item.getProduct());
+            orderItem.setProduct(product);
             orderItem.setQuantity(item.getQuantity());
             orderItem.setSize(item.getSize());
             orderItem.setUserId(item.getUserId());
@@ -87,6 +107,14 @@ public class OrderServiceImplementation implements OrderService {
             item.setOrder(savedOrder);
             orderItemRepository.save(item);
         }
+
+        // 2. Làm trống giỏ hàng sau khi đặt hàng thành công
+        cart.getCartItems().clear();
+        cart.setTotalPrice(0);
+        cart.setTotalDiscountedPrice(0);
+        cart.setTotalItem(0);
+        cart.setDiscount(0);
+        cartRepository.save(cart);
 
         return savedOrder;
     }
@@ -140,6 +168,18 @@ public class OrderServiceImplementation implements OrderService {
     @Override
     public Order canceledOrder(Long orderId) throws OrderException {
         Order order = findOrderById(orderId);
+        
+        // 1. Hoàn trả lại số lượng kho nếu đơn hàng bị hủy
+        if (!"CANCELLED".equalsIgnoreCase(order.getOrderStatus())) {
+            for (OrderItem item : order.getOrderItems()) {
+                Product product = item.getProduct();
+                if (product != null) {
+                    product.setQuantity(product.getQuantity() + item.getQuantity());
+                    productRepository.save(product);
+                }
+            }
+        }
+
         order.setOrderStatus("CANCELLED");
         return orderRepository.save(order);
     }
@@ -154,5 +194,4 @@ public class OrderServiceImplementation implements OrderService {
         Order order = findOrderById(orderId);
         orderRepository.delete(order);
     }
-    
 }
