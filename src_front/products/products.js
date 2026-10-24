@@ -1,8 +1,10 @@
 /* 
-   - Where the product comes from:
+   products.js - builds the product page.
+
+   Where the product comes from:
    - products.html?id=12          -> backend  GET /api/products/id/12
    - products.html?id=netflix     -> sample data in ../data.js (the static cards on the home page)
-*/
+ */
 const $ = sel => document.querySelector(sel);
 
 const money = n => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n);
@@ -21,7 +23,8 @@ const titleCase = s => s.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase(
 const IMG_DIR = '../product_images/';
 const imageFor = p => {
     const src = p.img || `${p.id}.png`;
-    return /^(https?:|data:|\/|\.\.\/)/.test(src) ? src : IMG_DIR + src;
+    if (/^(https?:|data:|\/|\.\.\/)/.test(src)) return src;
+    return src.startsWith('product_images/') ? '../' + src : IMG_DIR + src;
 };
 
 function placeholder(name) {
@@ -74,6 +77,7 @@ function toProduct(p) {
     const old = p.price > price ? p.price : undefined;          // crossed-out original price
     const ratings = p.ratings || [];
     const average = ratings.length ? ratings.reduce((s, r) => s + r.rating, 0) / ratings.length : 0;
+    const feedback = buildFeedback(p.ratings, p.reviews);
 
     // every size becomes one option you can pick; no sizes = a single option
     const sizes = Array.from(p.sizes || []);
@@ -86,12 +90,12 @@ function toProduct(p) {
         productId: p.id,                                         // the real backend id (needed for cart / reviews later)
         name: p.title,
         category: (p.category && p.category.name) || 'Other',
-        rating: average,
-        reviewCount: ratings.length,
+        rating: feedback.rating,
+        reviewCount: feedback.reviewCount,
         img: p.imageUrl || undefined,
         description: p.description ? p.description.split(/\n+/) : [],
         variants,
-        reviews: [],                                             // filled in later (Phase 4)
+        reviews: feedback.reviews,
     };
 }
 
@@ -148,6 +152,7 @@ async function loadRelated(product) {
     const product = await loadProduct();
     initPage(product);
     renderRelated(product);
+    if (Auth.isLoggedIn()) refreshFeedback(product);   // logged in: use the dedicated ratings/reviews endpoints
 })();
 
 /* =========================================================
@@ -169,8 +174,8 @@ function initPage(product) {
     $('#pp-title').textContent = product.name;
     $('#pp-stars').style.setProperty('--rating', product.rating);
     $('#pp-rating-text').textContent = product.reviewCount
-        ? `${product.rating.toFixed(1)} / 5 · ${product.reviewCount.toLocaleString('en-US')} reviews`
-        : 'No reviews yet';
+        ? `${product.rating.toFixed(1)} / 5 · ${product.reviewCount.toLocaleString('en-US')} ratings`
+        : 'No ratings yet';
 
     const fav = $('#pp-fav');
     fav.addEventListener('click', () => {
@@ -275,31 +280,7 @@ function initPage(product) {
     $('#pp-add').addEventListener('click', () => addToCart(false));
     $('#pp-buy').addEventListener('click', () => addToCart(true));      // Buy now = add, then open the cart
 
-    /* ----- reviews (sidebar, first) ----- */
-    $('#pp-rev-sum').innerHTML = `
-        <strong>${product.rating.toFixed(1)}</strong>
-        <div>
-            <div class="stars" style="--rating: ${product.rating}">★★★★★</div>
-            <span>${product.reviewCount.toLocaleString('en-US')} reviews</span>
-        </div>`;
-
-    const reviews = product.reviews || [];
-    if (reviews.length) {
-        $('#pp-rev-list').innerHTML = reviews.map(r => `
-            <div class="pp-review">
-                <div class="pp-avatar" style="background:${avatarColor(r.user)}">${esc(r.user[0].toUpperCase())}</div>
-                <div class="pp-rev-body">
-                    <div class="pp-rev-top">
-                        <b>${esc(r.user)}</b>
-                        <div class="stars" style="--rating: ${r.rating}">★★★★★</div>
-                    </div>
-                    <div class="pp-rev-date">${esc(r.date)}</div>
-                    <p>${esc(r.text)}</p>
-                </div>
-            </div>`).join('');
-    } else {
-        $('#pp-rev-list').innerHTML = '<p>No reviews yet.</p>';
-    }
+    renderReviews(product);
 
     renderVariants();
     updateTotals();
@@ -340,5 +321,164 @@ function setupCollapse(boxSel, btnSel) {
     btn.addEventListener('click', () => {
         const open = box.classList.toggle('open');
         btn.textContent = open ? 'Show less ▲' : 'See more ▼';
+    });
+}
+
+
+/* =========================================================
+   RATINGS + REVIEWS
+   GET  /api/reviews/product/{id}    GET  /api/ratings/product/{id}
+   POST /api/ratings/create          POST /api/reviews/create
+   ========================================================= */
+// the backend may send dates as "2026-10-24T10:15:30" or as [2026,10,24,10,15,30]
+const dateOf = v => v ? (Array.isArray(v) ? new Date(v[0], v[1] - 1, v[2], v[3] || 0, v[4] || 0) : new Date(v)) : new Date(0);
+
+// ratings (stars) and reviews (text) are separate lists in the backend.
+// A review shows stars when the same user also left a rating.
+function buildFeedback(ratings, reviews) {
+    ratings = ratings || [];
+    reviews = reviews || [];
+    const byUser = {};
+    ratings.forEach(r => { if (r.user) byUser[r.user.id] = r.rating; });
+
+    return {
+        rating: ratings.length ? ratings.reduce((s, r) => s + r.rating, 0) / ratings.length : 0,
+        reviewCount: ratings.length,
+        reviews: [...reviews].sort((a, b) => dateOf(b.createdAt) - dateOf(a.createdAt)).map(r => {
+            const u = r.user || {};
+            const d = dateOf(r.createdAt);
+            return {
+                user: ((u.firstName || '') + ' ' + (u.lastName || '')).trim() || 'Customer',
+                date: isNaN(d) || d.getTime() === 0 ? '' : d.toLocaleDateString('en-US', { dateStyle: 'medium' }),
+                rating: u.id != null ? byUser[u.id] : undefined,
+                text: r.review || '',
+            };
+        }),
+    };
+}
+
+function renderReviews(product) {
+    // hero stars + text
+    $('#pp-stars').style.setProperty('--rating', product.rating);
+    $('#pp-rating-text').textContent = product.reviewCount
+        ? `${product.rating.toFixed(1)} / 5 · ${product.reviewCount.toLocaleString('en-US')} ratings`
+        : 'No ratings yet';
+
+    $('#pp-rev-sum').innerHTML = `
+        <strong>${product.rating.toFixed(1)}</strong>
+        <div>
+            <div class="stars" style="--rating: ${product.rating}">★★★★★</div>
+            <span>${product.reviewCount.toLocaleString('en-US')} ratings</span>
+        </div>`;
+
+    const reviews = product.reviews || [];
+    $('#pp-rev-list').innerHTML = reviews.length ? reviews.map(r => `
+        <div class="pp-review">
+            <div class="pp-avatar" style="background:${avatarColor(r.user)}">${esc(r.user[0].toUpperCase())}</div>
+            <div class="pp-rev-body">
+                <div class="pp-rev-top">
+                    <b>${esc(r.user)}</b>
+                    ${r.rating != null ? `<div class="stars" style="--rating: ${r.rating}">★★★★★</div>` : ''}
+                </div>
+                <div class="pp-rev-date">${esc(r.date)}</div>
+                <p>${esc(r.text)}</p>
+            </div>
+        </div>`).join('') : '<p>No reviews yet.</p>';
+
+    renderReviewForm(product);
+}
+
+// reload both lists (needs a login on some backends, so fall back to the lists inside the product)
+async function refreshFeedback(product) {
+    if (!product.productId) return;
+    try {
+        let ratings, reviews;
+        try {
+            [reviews, ratings] = await Promise.all([
+                apiFetch('/api/reviews/product/' + product.productId),
+                apiFetch('/api/ratings/product/' + product.productId),
+            ]);
+        } catch {
+            const fresh = await apiFetch('/api/products/id/' + product.productId);
+            ratings = fresh.ratings;
+            reviews = fresh.reviews;
+        }
+        Object.assign(product, buildFeedback(ratings, reviews));
+        renderReviews(product);
+    } catch (err) {
+        console.warn('Could not refresh reviews:', err.message);
+    }
+}
+
+// the star picker + review box, or a "log in" note
+function renderReviewForm(product) {
+    let box = $('#pp-rev-form');
+    if (!box) {
+        box = document.createElement('div');
+        box.id = 'pp-rev-form';
+        $('#pp-rev-list').before(box);
+
+        const style = document.createElement('style');       // styles for the form, kept here so products.css stays untouched
+        style.textContent = `
+            .rf{ margin-bottom:18px; }
+            .rf-stars{ display:flex; gap:4px; margin-bottom:10px; }
+            .rf-stars button{ border:none; background:none; padding:0 2px; color:#4a4670; font-size:26px; cursor:pointer; transition:color .15s, transform .15s; }
+            .rf-stars button:hover{ transform:scale(1.15); }
+            .rf-stars button.on{ color:#ffc107; }
+            .rf textarea{ width:100%; padding:12px 16px; border:1px solid rgba(255,255,255,.18); border-radius:16px; background:rgba(255,255,255,.05); color:#fff; font-family:inherit; font-size:14px; outline:none; resize:vertical; }
+            .rf textarea:focus{ border-color:#3b6cff; }
+            .rf-msg{ min-height:18px; margin:6px 4px; color:#ff7a6b; font-size:13px; }
+            .rf-btn{ padding:10px 26px; border:none; border-radius:30px; background:#ff523b; color:#fff; font-family:inherit; font-size:14px; cursor:pointer; }
+            .rf-btn:disabled{ opacity:.5; cursor:wait; }
+            .rf-note{ margin-bottom:18px; font-size:14px; }
+            .rf-note a{ color:#6f93ff; }`;
+        document.head.appendChild(style);
+    }
+
+    if (!product.productId) { box.innerHTML = ''; return; }          // sample product, not in the database
+
+    if (!Auth.isLoggedIn()) {
+        box.innerHTML = `<p class="rf-note"><a href="${ROOT}auth.html?next=${encodeURIComponent(location.href)}">Log in</a> to rate and review this product.</p>`;
+        return;
+    }
+
+    box.innerHTML = `
+        <form class="rf" novalidate>
+            <div class="rf-stars" role="group" aria-label="Your rating">
+                ${[1, 2, 3, 4, 5].map(n => `<button type="button" data-v="${n}" aria-label="${n} star${n > 1 ? 's' : ''}">★</button>`).join('')}
+            </div>
+            <textarea name="review" rows="3" placeholder="Write a review (optional)"></textarea>
+            <p class="rf-msg" role="alert"></p>
+            <button type="submit" class="rf-btn">Submit</button>
+        </form>`;
+
+    const formEl = box.querySelector('form');
+    const stars = formEl.querySelectorAll('.rf-stars button');
+    let picked = 0;
+
+    stars.forEach(b => b.addEventListener('click', () => {
+        picked = Number(b.dataset.v);
+        stars.forEach(s => s.classList.toggle('on', Number(s.dataset.v) <= picked));
+    }));
+
+    formEl.addEventListener('submit', async e => {
+        e.preventDefault();
+        const msg = formEl.querySelector('.rf-msg');
+        const btn = formEl.querySelector('.rf-btn');
+        const text = formEl.review.value.trim();
+        msg.textContent = '';
+
+        if (!picked && !text) { msg.textContent = 'Pick a star rating or write a review.'; return; }
+
+        btn.disabled = true;
+        try {
+            if (picked) await apiFetch('/api/ratings/create', { method: 'POST', body: { productId: product.productId, rating: picked } });
+            if (text)   await apiFetch('/api/reviews/create', { method: 'POST', body: { productId: product.productId, review: text } });
+            await refreshFeedback(product);
+            toast('Thanks for your feedback ✓');
+        } catch (err) {
+            msg.textContent = err.message;
+            btn.disabled = false;
+        }
     });
 }
