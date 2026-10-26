@@ -6,9 +6,15 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 
-@Entity 
+@Entity
+@Table(name = "cart_item", indexes = {
+    @Index(name = "idx_cart_item_cart_id", columnList = "cart_id"),
+    @Index(name = "idx_cart_item_user_id", columnList = "user_id")
+})
 public class CartItem {
     @Id 
     @GeneratedValue(strategy = GenerationType.IDENTITY)

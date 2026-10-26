@@ -1,9 +1,11 @@
 package com.it3180hust.config;
 
+import java.util.Arrays;
 import java.util.Collections;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -34,6 +36,8 @@ public class AppConfig{
 
             // Endpoint permissions
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/auth/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .requestMatchers("/api/**").authenticated()
                 .anyRequest().permitAll()
@@ -50,19 +54,19 @@ public class AppConfig{
     @Bean 
     public CorsConfigurationSource corsConfigurationSource(){
         CorsConfiguration cfg = new CorsConfiguration();
-        // cfg.setAllowedOrigins(Arrays.asList(
-        //     "http://localhost:3000", // link của localhost react
-        //     "http://localhost:4300" // link của localhost angular
-        // ));
-        cfg.setAllowedMethods(Collections.singletonList("*"));
+        cfg.setAllowedOrigins(Arrays.asList(
+            "http://localhost:8080",
+            "http://127.0.0.1:8080",
+            "http://localhost:3000",
+            "http://localhost:4200"
+        ));
+        cfg.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         cfg.setAllowedHeaders(Collections.singletonList("*"));
         cfg.setExposedHeaders(Collections.singletonList("Authorization"));
         cfg.setAllowCredentials(true);
         cfg.setMaxAge(3600L);
         
-        // lưu trữ Map giữa URL và cấu hình CORS (CorsConfiguration)
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        // ý nghĩa: áp dụng toàn bộ luật cors trong biến cfg cho mọi endpoint (/**) của server
         source.registerCorsConfiguration("/**", cfg);
         return source;
     }

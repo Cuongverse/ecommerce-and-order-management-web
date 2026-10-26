@@ -84,7 +84,7 @@ Hệ thống được thiết kế theo mô hình kiểm soát truy cập dựa 
 ## 6. HƯỚNG DẪN CÀI ĐẶT & CHẠY THỬ (GETTING STARTED)
 
 ### 6.1. Yêu cầu môi trường
-* Node.js $\ge$ 18.x hoặc Java JDK $\ge$ 17.
+* Node.js $\ge$ 18.x hoặc Java JDK $\ge$ 25.
 * Docker & Docker Compose.
 * Git.
 
