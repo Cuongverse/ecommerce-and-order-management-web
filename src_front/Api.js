@@ -12,9 +12,9 @@
 const API_BASE = "http://localhost:5432";
 const TOKEN_KEY = "jwt";
 
-// true  = fake backend: every page works with sample data, you are "logged in" as an admin
+// true  = fake backend: every page works with sample data, you are "logged in" as an admin basically just for testing purposes
 // false = the real backend
-const MOCK_MODE = false;
+const MOCK_MODE = trues;
 
 // folder that api.js lives in, so links work from any page (also from /products/)
 const ROOT = new URL(".", document.currentScript.src).href;
@@ -43,6 +43,14 @@ const Auth = {
             return String(JSON.parse(atob(payload)).authorities || "").split(",").includes("ROLE_ADMIN");
         } catch { return false; }
     },
+
+    isLoggedIn(){
+        if(MOCK_MODE) return true; 
+        try{
+            const p = JSON.parse(atob(this.getToken().split(".")[1].replace(/-/g, "+").replace(/_/g,"/"))); 
+            return p.exp * 1000 > Date.now();            
+        } catch {return false;}
+    }
 };
 
 /* ---------- the one function every page uses to call the backend ----------
@@ -62,7 +70,7 @@ async function apiFetch(path, options = {}) {
 
     // login/signup must NOT send an old token (the backend rejects expired ones)
     const token = Auth.getToken();
-    if (token && !path.startsWith("/auth/")) {
+    if (token && Auth.isLoggedIn() &&!path.startsWith("/auth/")) {
         headers.Authorization = "Bearer " + token;
     }
 
@@ -77,6 +85,9 @@ async function apiFetch(path, options = {}) {
     let data = null;
     try { data = text ? JSON.parse(text) : null; } catch { data = text; }
 
+    if(res.status == 401){
+        Auth.clear(); 
+    }
     if (!res.ok) {
         const err = new Error((data && data.message) || `Request failed (${res.status})`);
         err.status = res.status;

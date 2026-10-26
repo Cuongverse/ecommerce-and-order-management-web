@@ -174,7 +174,7 @@ async function loadProducts() {
     usingSample = false;
 
     try {
-        const page = await apiFetch('/api/products?' + buildQuery());
+        const page = await apiFetch('/api/products?/search?q=' + buildQuery());
         allProducts = page.content.map(fromBackend);       // Spring wraps the list in "content"
     } catch (err) {
         console.warn('Could not load products:', err.message);
