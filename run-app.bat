@@ -1,7 +1,7 @@
 @echo off
 cd /d "D:\clone github\ecommerce-and-order-management-web"
 
-start "Backend" cmd /k "cd /d D:\clone github\ecommerce-and-order-management-web\ecommerce && .\mvnw spring-boot:run"
+start "Backend" cmd /k "cd /d D:\clone github\ecommerce-and-order-management-web\src_back && .\mvnw spring-boot:run"
 
 where py >nul 2>nul
 if %ERRORLEVEL% EQU 0 (
