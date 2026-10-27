@@ -24,9 +24,47 @@ const titleCase = s => s.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase(
    3. no img field at all -> product_images/<id>.png
    4. if that file doesn't exist, a gradient placeholder with initials is drawn  */
 const IMG_DIR = '../product_images/';
+const USD_RATE = 24000;
+
+function toUsdValue(rawValue) {
+    const parsed = Number(String(rawValue ?? '').replace(/[^0-9.-]+/g, ''));
+    if (!Number.isFinite(parsed)) return null;
+    return parsed > 1000 ? parsed / USD_RATE : parsed;
+}
+
+function normalizeImageSource(src) {
+    if (!src) return null;
+    const value = String(src).trim();
+    if (!value) return null;
+    if (/^(https?:|data:|\/)/.test(value) || value.startsWith('../')) return value;
+    if (value.startsWith('product_images/') || value.startsWith('images/')) return `../${value}`;
+    if (value.includes('/')) return `../${value}`;
+    return `${IMG_DIR}${value}`;
+}
+
+function preferredLocalImageForName(name) {
+    const text = String(name || '').toLowerCase();
+    const mappings = [
+        { keys: ['pubg'], file: 'Pubg.jpg' },
+        { keys: ['genshin', 'genesis'], file: 'Genshin Impact.webp' },
+        { keys: ['minecraft'], file: 'Minecraft.png' },
+        { keys: ['mobile legends', 'mobile legend'], file: 'Mobile Legend.webp' },
+        { keys: ['valorant', 'vp'], file: 'Valorant.webp' },
+        { keys: ['free fire'], file: 'Free Fire.webp' },
+        { keys: ['nintendo', 'eshop'], file: 'Nitendo.webp' },
+        { keys: ['xbox', 'live'], file: 'Xbox.webp' },
+        { keys: ['playstation'], file: 'PlayStation.webp' },
+        { keys: ['steam'], file: 'Steam.webp' },
+        { keys: ['roblox'], file: 'Roblox.webp' }
+    ];
+
+    const match = mappings.find(m => m.keys.some(key => text.includes(key)));
+    return match ? `${IMG_DIR}${match.file}` : null;
+}
+
 const imageFor = p => {
-    const src = p.img || `${p.id}.png`;
-    return /^(https?:|data:|\/|\.\.\/)/.test(src) ? src : IMG_DIR + src;
+    const src = normalizeImageSource(p.img || p.imageUrl || p.image_url || `${p.id}.png`);
+    return src || `${IMG_DIR}testing.png`;
 };
 
 function placeholder(name) {
@@ -76,6 +114,8 @@ function toast(msg) {
    products.html?id=netflix            -> full data from data.js
    products.html?id=xyz&name=Some Card -> stand-in page (no data yet)
    ========================================================= */
+const API_BASE = 'http://localhost:5432';
+let product = null;
 const params = new URLSearchParams(location.search);
 const wantedId = params.get('id') || Object.keys(PRODUCTS)[0];
 
@@ -92,10 +132,100 @@ function makeFallback(name) {
     };
 }
 
-const data = PRODUCTS[wantedId] || makeFallback(params.get('name') || titleCase(wantedId));
-const product = { id: wantedId, ...data };
+function toSlug(value) {
+    return String(value || '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '') || 'product';
+}
 
-initPage();
+function mapApiProduct(product) {
+    const safeName = product.title || product.name || 'Gift Card';
+    const legacyImg = product.imageUrl || product.image_url || 'testing.png';
+    const safeImg = normalizeImageSource(preferredLocalImageForName(safeName) || legacyImg) || `${IMG_DIR}testing.png`;
+    const safePrice = Number(product.discountedPrice ?? product.price ?? 10);
+    const usdPrice = toUsdValue(safePrice) ?? (Number(safePrice) || 10);
+    const key = String(product.id ?? toSlug(safeName));
+
+    return {
+        id: key,
+        name: safeName,
+        category: product.category?.name || 'Gaming',
+        rating: 4.5,
+        reviewCount: 1,
+        img: safeImg,
+        description: [product.description || 'Full details for this product are coming soon.'],
+        instructions: [
+            'Open the product details page to review the offer.',
+            'Choose a variant and quantity.',
+            'Complete the checkout flow to receive the code.'
+        ],
+        variants: [{
+            label: `${safeName} - Standard`,
+            price: usdPrice,
+            old: usdPrice + 5,
+            stock: true
+        }],
+        reviews: []
+    };
+}
+
+async function loadProductsFromApi() {
+    try {
+        const response = await fetch(`${API_BASE}/api/products?pageNumber=0&pageSize=50`, { credentials: 'include' });
+        if (!response.ok) {
+            throw new Error(`Request failed with ${response.status}`);
+        }
+
+        const payload = await response.json();
+        const items = Array.isArray(payload) ? payload : (payload.content || []);
+
+        if (!Array.isArray(items) || items.length === 0) {
+            return null;
+        }
+
+        const mapped = {};
+        items.forEach((item) => {
+            const mappedItem = mapApiProduct(item);
+            const key = String(item.id ?? mappedItem.id);
+            mapped[key] = mappedItem;
+            mappedItem.id = key;
+        });
+
+        window.PRODUCTS = mapped;
+        return mapped;
+    } catch (error) {
+        console.warn('Falling back to static product catalog:', error);
+        return null;
+    }
+}
+
+async function bootstrapProduct() {
+    await loadProductsFromApi();
+    const catalog = window.PRODUCTS || PRODUCTS;
+    const lookupKey = String(wantedId);
+    const requestedImage = normalizeImageSource(params.get('img'));
+    const requestedPrice = toUsdValue(params.get('price'));
+    const data = catalog[lookupKey]
+        || Object.values(catalog).find(item => String(item.id) === lookupKey || toSlug(item.name) === lookupKey)
+        || makeFallback(params.get('name') || titleCase(wantedId));
+
+    const combined = { id: wantedId, ...data };
+    if (requestedImage) combined.img = requestedImage;
+    if (requestedPrice !== null && combined.variants?.length) {
+        combined.variants = combined.variants.map(v => ({
+            ...v,
+            price: Number(requestedPrice),
+            old: Number(requestedPrice) + 5
+        }));
+    }
+
+    product = combined;
+    window.__currentProduct = product;
+    initPage();
+}
+
+bootstrapProduct();
 
 /* =========================================================
    RENDER

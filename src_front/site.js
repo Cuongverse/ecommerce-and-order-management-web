@@ -78,33 +78,100 @@ const slug = s => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g
 // the clicked card's own info travels in the URL, so the product page can show it
 function productUrl(item) {
     const q = new URLSearchParams({ id: item.id || slug(item.name), name: item.name });
-    ['price', 'rating', 'img'].forEach(k => {
+    const chosenImage = item.img || resolveProductImage(item.name);
+    q.set('img', chosenImage);
+    ['price', 'rating'].forEach(k => {
         if (item[k] != null && item[k] !== '') q.set(k, item[k]);
     });
     return 'products/products.html?' + q.toString();
 }
 
 /* ---------- product cards ---------- */
-const products = [
-    { name: "VND Steam Wallet Việt Nam Gift Card", price: "420$", rating: 4.5, img: "product_images/testing.png" },
-    { name: "USD Steam Wallet Card Order",         price: "67$",  rating: 4.5, img: "product_images/testing.png" },
-    { name: "Euro Steam Wallet Gift Card",         price: "99$",  rating: 1.0, img: "product_images/testing.png" },
-    { name: "PUBG PC Pass Steam",                  price: "30$",  rating: 4.5, img: "product_images/testing.png" },
-    { name: "Random Steam Game Code",              price: "9$",   rating: 2.0, img: "product_images/testing.png" },
-    { name: "Where Winds Meet Top-up",             price: "25$",  rating: 4.5, img: "product_images/testing.png" },
-    { name: "Fuckass cards",                       price: "67$",  rating: 3.35,img: "product_images/testing.png" },
-    { name: "Fuckass cards",                       price: "67$",  rating: 3.35,img: "product_images/testing.png" },
-    { name: "Fuckass cards",                       price: "67$",  rating: 3.35,img: "product_images/testing.png" },
-    { name: "Fuckass cards",                       price: "67$",  rating: 3.35,img: "product_images/testing.png" },
-    { name: "Fuckass cards",                       price: "67$",  rating: 3.35,img: "product_images/testing.png" },
-    { name: "Fuckass cards",                       price: "67$",  rating: 3.35,img: "product_images/testing.png" },
-    { name: "Fuckass cards",                       price: "67$",  rating: 3.35,img: "product_images/testing.png" },
-    { name: "Fuckass cards",                       price: "67$",  rating: 3.35,img: "product_images/testing.png" },
-    { name: "Fuckass cards",                       price: "67$",  rating: 3.35,img: "product_images/testing.png" },
-    { name: "Fuckass cards",                       price: "67$",  rating: 3.35,img: "product_images/testing.png" },
-];
-
+const API_BASE = 'http://localhost:5432';
 const productGrid = document.querySelector('.product-grid');
+
+const fallbackProducts = [
+    { name: "VND Steam Wallet Việt Nam Gift Card", price: 420, rating: 4.5, img: "product_images/testing.png" },
+    { name: "USD Steam Wallet Card Order",         price: 67,  rating: 4.5, img: "product_images/testing.png" },
+    { name: "Euro Steam Wallet Gift Card",         price: 99,  rating: 1.0, img: "product_images/testing.png" },
+    { name: "PUBG PC Pass Steam",                  price: 30,  rating: 4.5, img: "product_images/testing.png" },
+    { name: "Random Steam Game Code",              price: 9,   rating: 2.0, img: "product_images/testing.png" },
+    { name: "Where Winds Meet Top-up",             price: 25,  rating: 4.5, img: "product_images/testing.png" },
+    { name: "Game Top-up Card",                    price: 67,  rating: 3.35, img: "product_images/testing.png" },
+    { name: "Game Top-up Card",                    price: 67,  rating: 3.35, img: "product_images/testing.png" },
+    { name: "Game Top-up Card",                    price: 67,  rating: 3.35, img: "product_images/testing.png" },
+    { name: "Game Top-up Card",                    price: 67,  rating: 3.35, img: "product_images/testing.png" }
+];
+const USD_RATE = 24000;
+
+function toUsd(value) {
+    const numeric = Number(value ?? 0);
+    return Number.isFinite(numeric) ? numeric / USD_RATE : 0;
+}
+
+function formatUsd(value, digits = 2) {
+    return `$${Number(value ?? 0).toFixed(digits)}`;
+}
+
+function productAsset(fileName) {
+    return `product_images/${fileName}`;
+}
+
+let products = [...fallbackProducts];
+
+function resolveProductImage(productName) {
+    const text = String(productName || '').toLowerCase();
+    const mappings = [
+        { keys: ['pubg'], file: 'Pubg.jpg' },
+        { keys: ['genshin', 'genesis'], file: 'Genshin Impact.webp' },
+        { keys: ['minecraft'], file: 'Minecraft.png' },
+        { keys: ['mobile legends', 'mobile legend'], file: 'Mobile Legend.webp' },
+        { keys: ['valorant', 'vp'], file: 'Valorant.webp' },
+        { keys: ['free fire'], file: 'Free Fire.webp' },
+        { keys: ['nintendo', 'eshop'], file: 'Nitendo.webp' },
+        { keys: ['xbox', 'live'], file: 'Xbox.webp' },
+        { keys: ['playstation'], file: 'PlayStation.webp' },
+        { keys: ['steam'], file: 'Steam.webp' },
+        { keys: ['roblox'], file: 'Roblox.webp' }
+    ];
+
+    const match = mappings.find(m => m.keys.some(key => text.includes(key)));
+    const fileName = match ? match.file : 'testing.png';
+    return productAsset(fileName);
+}
+
+function resolveVoucherImage(panelTitle) {
+    const key = String(panelTitle || '').toLowerCase();
+    if (key.includes('battle')) return productAsset('BattlePass.jpg');
+    if (key.includes('rare')) return productAsset('RareDrops.webp');
+    if (key.includes('skin') || key.includes('weapon')) return productAsset('Skin &Weapons.webp');
+    return productAsset('Skin &Weapons.webp');
+}
+
+function resolveServiceImage(groupTitle) {
+    const key = String(groupTitle || '').toLowerCase();
+    if (key.includes('rank')) return productAsset('RankBoost.webp');
+    if (key.includes('farm')) return productAsset('Farming.webp');
+    if (key.includes('quest') || key.includes('mission')) return productAsset('Quest&Mission.webp');
+    if (key.includes('level') || key.includes('carry')) return productAsset('LevelUp.jpg');
+    return productAsset('RankBoost.webp');
+}
+
+function mapApiProduct(product) {
+    const normalizedPrice = Number(product.discountedPrice ?? product.price ?? 0);
+    const priceUsd = toUsd(normalizedPrice);
+    const productName = product.title || product.name || 'Gift Card';
+    const chosenImage = resolveProductImage(productName);
+
+    return {
+        id: String(product.id ?? product.title ?? Math.random().toString(16).slice(2)),
+        name: productName,
+        priceValue: priceUsd > 0 ? priceUsd : 10,
+        price: formatUsd(priceUsd > 0 ? priceUsd : 10),
+        rating: Number(product.numRatings ?? product.rating ?? 4.5),
+        img: chosenImage
+    };
+}
 
 function renderProducts(list) {
     productGrid.innerHTML = list.map(p => `
@@ -119,7 +186,140 @@ function renderProducts(list) {
     `).join('');
 }
 
-renderProducts(products);
+const shuffle = arr => [...arr].sort(() => Math.random() - 0.5);
+
+function buildLimitedOffers() {
+    const dealGrid = document.querySelector('.deal-grid');
+    if (!dealGrid) return;
+
+    const featured = [...products].filter(p => Number(p.priceValue ?? p.price ?? 0) > 0);
+    const picks = shuffle(featured).slice(0, 3);
+
+    dealGrid.innerHTML = picks.map((item, idx) => {
+        const base = Number(item.priceValue ?? item.price ?? 10);
+        const discount = 20 + (idx * 10) + (Math.random() > 0.5 ? 5 : 0);
+        const finalPrice = base * (1 - discount / 100);
+        const oldPrice = base;
+        return `
+            <a href="${productUrl(item)}" class="deal-card">
+                <span class="deal-badge">-${discount}%</span>
+                <img src="${item.img}" alt="${item.name}">
+                <div class="deal-info">
+                    <h4>${item.name}</h4>
+                    <p><span class="old">${formatUsd(oldPrice)}</span> <span class="new">${formatUsd(finalPrice)}</span></p>
+                </div>
+            </a>
+        `;
+    }).join('');
+}
+
+const voucherItems = [
+    { name: 'AK-47 Redline skin', category: 'Skin', oldPrice: 18.99, price: 12.99 },
+    { name: 'M416 Glacier skin', category: 'Skin', oldPrice: 16.5, price: 11.25 },
+    { name: 'AWM Dragon skin', category: 'Weapon', oldPrice: 21.0, price: 14.0 },
+    { name: 'Glock Phantom skin', category: 'Weapon', oldPrice: 15.0, price: 10.25 },
+    { name: 'M4A1-S Ghost skin', category: 'Skin', oldPrice: 14.99, price: 9.99 },
+    { name: 'Valorant Prime bundle', category: 'Bundle', oldPrice: 19.0, price: 12.5 },
+    { name: 'PUBG UMP skin pack', category: 'Skin', oldPrice: 17.5, price: 11.5 },
+    { name: 'Free Fire AK47 skin', category: 'Skin', oldPrice: 13.25, price: 8.99 },
+    { name: 'Genshin weapon upgrade pass', category: 'Weapon', oldPrice: 24.0, price: 16.0 },
+    { name: 'Minecraft rare bundle', category: 'Bundle', oldPrice: 12.5, price: 8.75 },
+    { name: 'CS2 knife skin', category: 'Weapon', oldPrice: 29.0, price: 19.0 },
+    { name: 'League skin discount pack', category: 'Skin', oldPrice: 20.0, price: 13.5 }
+];
+
+const serviceItems = [
+    { name: 'Rank boost (Gold to Diamond)', type: 'Rank boost', oldPrice: 24.0, price: 16.99 },
+    { name: 'Valorant win boost', type: 'Rank boost', oldPrice: 19.0, price: 13.5 },
+    { name: 'PUBG squad placement', type: 'Mission', oldPrice: 14.0, price: 9.5 },
+    { name: 'Genshin artifact farming', type: 'Farming', oldPrice: 18.0, price: 12.25 },
+    { name: 'LOL ranked carry', type: 'Rank boost', oldPrice: 26.0, price: 17.5 },
+    { name: 'Map clearing service', type: 'Quest', oldPrice: 16.0, price: 11.0 },
+    { name: 'Daily mission completion', type: 'Mission', oldPrice: 12.0, price: 8.0 },
+    { name: 'Dungeon clear boost', type: 'Quest', oldPrice: 15.5, price: 10.49 },
+    { name: 'Arena win boost', type: 'Rank boost', oldPrice: 21.0, price: 14.25 },
+    { name: 'Weapon upgrade setup', type: 'Service', oldPrice: 11.0, price: 7.25 },
+    { name: 'Character leveling service', type: 'Leveling', oldPrice: 22.0, price: 15.0 },
+    { name: 'Story mode completion', type: 'Mission', oldPrice: 13.25, price: 9.0 },
+    { name: 'Boss farming support', type: 'Farming', oldPrice: 17.5, price: 11.75 },
+    { name: 'Raid carry service', type: 'Quest', oldPrice: 28.5, price: 19.5 }
+];
+
+function renderVoucherGrid() {
+    const container = document.querySelector('.voucher-grid');
+    if (!container) return;
+
+    const panelTitles = ['Skin & Weapon', 'Battle Pass', 'Rare Drops'];
+    const grouped = [
+        voucherItems.slice(0, 4),
+        voucherItems.slice(4, 8),
+        voucherItems.slice(8, 12)
+    ];
+
+    container.innerHTML = grouped.map((group, groupIndex) => {
+        const title = panelTitles[groupIndex];
+        const image = resolveVoucherImage(title);
+
+        return `
+            <div class="voucher-panel">
+                <div class="panel-head">
+                    <h3>${title}</h3>
+                    <a href="" class="view-more">View more</a>
+                </div>
+                ${group.map(item => `
+                    <div class="voucher-item" data-name="${item.name}">
+                        <img src="${image}" alt="${item.name}">
+                        <div class="info">
+                            <h4>${item.name}</h4>
+                            <p class="price">${formatUsd(item.price)} - ${formatUsd(item.oldPrice)}</p>
+                            <p class="stars">★★★★★</p>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }).join('');
+}
+
+function renderServices() {
+    const track = document.querySelector('.services-track');
+    if (!track) return;
+
+    const groups = [
+        { title: 'Rank Boost', items: serviceItems.filter(s => s.type === 'Rank boost').slice(0, 4) },
+        { title: 'Farming', items: serviceItems.filter(s => s.type === 'Farming').slice(0, 4) },
+        { title: 'Mission & Quest', items: serviceItems.filter(s => s.type === 'Mission' || s.type === 'Quest').slice(0, 4) },
+        { title: 'Leveling & Carry', items: serviceItems.filter(s => s.type === 'Leveling' || s.type === 'Service').slice(0, 4) }
+    ];
+
+    track.innerHTML = groups.map(g => {
+        const image = resolveServiceImage(g.title);
+        return `
+            <div class="svc-panel">
+                <div class="svc-panel-head">
+                    <h3>${g.title}</h3>
+                    <a href="" class="svc-more">View more</a>
+                </div>
+                ${g.items.map(i => `
+                    <a href="${productUrl({ id: slug(i.name), name: i.name, img: image, price: formatUsd(i.price) })}" class="svc-row">
+                        <img src="${image}" alt="${i.name}">
+                        <div class="svc-info">
+                            <h4>${i.name}</h4>
+                            <p class="svc-price">${formatUsd(i.price)}</p>
+                            <div class="stars" style="--rating: 4.5">★★★★★</div>
+                        </div>
+                    </a>
+                `).join('')}
+            </div>
+        `;
+    }).join('');
+}
+
+function refreshStorefrontSections() {
+    buildLimitedOffers();
+    renderVoucherGrid();
+    renderServices();
+}
 
 /* ---------- deal countdown ---------- */
 function endOfWeek() {
@@ -156,6 +356,10 @@ function applyFilters() {
     const searched = products.filter(p => p.name.toLowerCase().includes(searchText));
     const result = filters[activeFilter](searched);
 
+    if (!productGrid) {
+        return;
+    }
+
     if (result.length === 0) {
         productGrid.innerHTML = '<p class="no-results">No cards found 😕</p>';
     } else {
@@ -168,13 +372,52 @@ document.getElementById('sort-select').addEventListener('change', e => {
     applyFilters();
 });
 
-// your navbar search box now works together with the filters
-document.querySelector('.search-box input').addEventListener('input', e => {
-    searchText = e.target.value.toLowerCase();
+const searchInput = document.querySelector('.search-box input');
+if (searchInput) {
+    searchInput.addEventListener('input', e => {
+        searchText = e.target.value.toLowerCase();
+        applyFilters();
+    });
+}
+
+async function loadProducts() {
+    try {
+        const response = await fetch(`${API_BASE}/api/products?pageNumber=0&pageSize=20`, {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' },
+            credentials: 'omit'
+        });
+
+        if (!response.ok) {
+            throw new Error(`API responded with ${response.status}`);
+        }
+
+        const payload = await response.json();
+        const items = Array.isArray(payload) ? payload : (payload.content || []);
+
+        if (Array.isArray(items) && items.length > 0) {
+            products = items.map(mapApiProduct);
+            applyFilters();
+            refreshStorefrontSections();
+            return;
+        }
+    } catch (error) {
+        console.warn('Falling back to local sample products:', error);
+    }
+
+    products = [...fallbackProducts].map((item, idx) => ({
+        ...item,
+        id: String(idx + 1),
+        priceValue: Number(item.price ?? 0),
+        price: formatUsd(Number(item.price ?? 0)),
+        img: resolveProductImage(item.name)
+    }));
     applyFilters();
-});
+    refreshStorefrontSections();
+}
 
 applyFilters();
+loadProducts();
 
 /* ---------- deal-of-the-week + voucher cards -> product page ---------- */
 document.querySelectorAll('.deal-card, .voucher-item').forEach(card => {
