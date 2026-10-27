@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout | GiftCard</title>
+    <link rel="stylesheet" href="site.css">
+    <link rel="stylesheet" href="cart.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- ================= header (same as site.html) ================= -->
+<div class="header">
+    <div class="container">
+        <div class="navbar">
+            <div class="logo">
+                <a href="site.html"><img src="header_images/logo.png" width="250px" alt="GiftCards"></a>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="site.html">Home</a></li>
+                    <li><a href="site.html#featured">Gift Cards</a></li>
+                    <li><a href="site.html#vouchers">Vouchers</a></li>
+                    <li><a href="orders.html">My Orders</a></li>
+                    <li><a href="admin.html">Admin</a></li>
+                </ul>
+            </nav>
+
+            <div class="nav-actions">
+                <div class="search-box">
+                    <input type="text" placeholder="Search gift cards...">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <circle cx="11" cy="11" r="7"/>
+                        <line x1="16.5" y1="16.5" x2="21" y2="21"/>
+                    </svg>
+                </div>
+                <button class="icon-btn" aria-label="Cart">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="9" cy="20" r="1.5"/>
+                        <circle cx="18" cy="20" r="1.5"/>
+                        <path d="M2 3h3l2.5 12h11l2-8H6"/>
+                    </svg>
+                </button>
+                <button class="icon-btn" aria-label="Balance">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="9"/>
+                        <path d="M14.5 9.5c-.5-1-1.5-1.5-2.5-1.5-1.4 0-2.5.8-2.5 2s1 1.8 2.5 2 2.5.8 2.5 2-1.1 2-2.5 2c-1 0-2-.5-2.5-1.5M12 6v2M12 16v2"/>
+                    </svg>
+                </button>
+                <button class="avatar-btn" aria-label="Profile">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <circle cx="12" cy="8" r="4"/>
+                        <path d="M4 21c0-4 3.5-7 8-7s8 3 8 7"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ================= checkout ================= -->
+<main class="ct-wrap">
+    <div class="ct-head">
+        <h1>Checkout</h1>
+        <a href="cart.html" class="view-all">&#10094; Back to cart</a>
+    </div>
+
+    <div class="ct-state" id="ct-state"><p>Loading your order...</p></div>
+
+    <div class="ct-layout" id="ct-layout" hidden>
+
+        <section class="ct-card">
+            <h3>Shipping address</h3>
+            <form class="ct-form" id="ct-form" novalidate>
+                <label>First name <input name="firstName" autocomplete="given-name" required></label>
+                <label>Last name <input name="lastName" autocomplete="family-name" required></label>
+                <label class="full">Street address <input name="streetAddress" autocomplete="street-address" required></label>
+                <label>City <input name="city" autocomplete="address-level2" required></label>
+                <label>Province / State <input name="province" autocomplete="address-level1" required></label>
+                <label>Zip code <input name="zipCode" autocomplete="postal-code" required></label>
+                <label>Mobile <input name="mobile" type="tel" autocomplete="tel" required></label>
+            </form>
+        </section>
+
+        <aside class="ct-card ct-summary">
+            <h3>Your order</h3>
+            <div id="ct-mini"></div>
+            <div class="ct-row"><span>Original price</span><span id="ct-orig"></span></div>
+            <div class="ct-row"><span>Discount</span><span id="ct-save"></span></div>
+            <div class="ct-row ct-total"><span>Total</span><span id="ct-total"></span></div>
+            <p class="ct-error" id="ct-msg" role="alert"></p>
+            <button type="submit" form="ct-form" class="ct-btn primary" id="ct-place">Place order</button>
+        </aside>
+    </div>
+</main>
+
+<footer class="footer ct-footer">
+    <div class="container">
+        <div class="footer-bottom">
+            <p>&copy; 2026 GiftCards. All rights reserved.</p>
+        </div>
+    </div>
+</footer>
+
+<script src="api.js"></script>
+<script>
+const $ = sel => document.querySelector(sel);
+const money = n => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n);
+const esc = s => String(s).replace(/[&<>"']/g, c => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+));
+
+const lineOriginal = i => i.price || 0;
+const lineTotal = i => i.discountedPrice > 0 ? i.discountedPrice : lineOriginal(i);
+
+function showState(html) {
+    $('#ct-state').innerHTML = html;
+    $('#ct-state').hidden = false;
+    $('#ct-layout').hidden = true;
+}
+
+async function init() {
+    if (!Auth.isLoggedIn()) {
+        location.href = 'auth.html?next=' + encodeURIComponent(location.href);
+        return;
+    }
+    try {
+        const cart = await apiFetch('/api/cart');
+        const items = Array.from(cart.cartItems || []).sort((a, b) => a.id - b.id);
+        if (!items.length) {
+            showState(`<p>Your cart is empty.</p><a class="ct-btn primary" href="site.html">Browse gift cards</a>`);
+            return;
+        }
+
+        $('#ct-mini').innerHTML = items.map(i => `
+            <div class="ct-mini">
+                <span><b>${esc((i.product && i.product.title) || 'Product')}</b>${i.size ? ' (' + esc(i.size) + ')' : ''} × ${i.quantity}</span>
+                <span>${money(lineTotal(i))}</span>
+            </div>`).join('');
+
+        const original = items.reduce((s, i) => s + lineOriginal(i), 0);
+        const total = items.reduce((s, i) => s + lineTotal(i), 0);
+        $('#ct-orig').textContent = money(original);
+        $('#ct-save').textContent = money(original - total);
+        $('#ct-total').textContent = money(total);
+
+        $('#ct-state').hidden = true;
+        $('#ct-layout').hidden = false;
+    } catch (err) {
+        showState(`<p class="ct-error">${esc(err.message)}</p>`);
+    }
+}
+
+$('#ct-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const msg = $('#ct-msg');
+    const button = $('#ct-place');
+    msg.textContent = '';
+
+    // field names match the backend Address: firstName, lastName, streetAddress, city, province, zipCode, mobile
+    const address = Object.fromEntries(new FormData(e.target));
+    for (const k in address) address[k] = address[k].trim();
+
+    if (Object.values(address).some(v => !v)) {
+        msg.textContent = 'Please fill in every field.';
+        return;
+    }
+
+    button.disabled = true;
+    try {
+        await apiFetch('/api/orders', { method: 'POST', body: address });
+        location.href = 'orders.html';
+    } catch (err) {
+        msg.textContent = err.message;
+        button.disabled = false;
+    }
+});
+
+init();
+</script>
+</body>
+</html>
