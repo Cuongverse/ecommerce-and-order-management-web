@@ -2,7 +2,6 @@ package com.it3180hust.controller;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -25,8 +24,12 @@ import jakarta.validation.Valid;
 @RestController
 @RequestMapping("/api/admin/products")
 public class AdminProductController {
-    @Autowired 
-    private ProductService productService;
+    
+    private final ProductService productService;
+
+    public AdminProductController(ProductService productService) {
+        this.productService = productService;
+    }
 
     @PostMapping("")
     public ResponseEntity<Product> createProduct(@Valid @RequestBody CreateProductRequest req){

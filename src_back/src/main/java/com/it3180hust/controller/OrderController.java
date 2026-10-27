@@ -2,7 +2,6 @@ package com.it3180hust.controller;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,11 +23,13 @@ import com.it3180hust.service.UserService;
 @RestController 
 @RequestMapping("/api/orders")
 public class OrderController {
-    @Autowired
-    private OrderService orderService;
+    private final OrderService orderService;
+    private final UserService userService;
 
-    @Autowired
-    private UserService userService;
+    public OrderController(OrderService orderService, UserService userService) {
+        this.orderService = orderService;
+        this.userService = userService;
+    }
 
     @PostMapping("")
     public ResponseEntity<Order>createOrder(@RequestBody Address shippingAddress,
