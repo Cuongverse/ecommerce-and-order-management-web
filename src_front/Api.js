@@ -14,7 +14,7 @@ const TOKEN_KEY = "jwt";
 
 // true  = fake backend: every page works with sample data, you are "logged in" as an admin basically just for testing purposes
 // false = the real backend
-const MOCK_MODE = true;
+const MOCK_MODE = false;
 
 // folder that api.js lives in, so links work from any page (also from /products/)
 const ROOT = new URL(".", document.currentScript.src).href;
