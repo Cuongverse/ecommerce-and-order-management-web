@@ -1,6 +1,5 @@
 package com.it3180hust.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,11 +26,13 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/cart")
 @Tag(name="Cart Management", description="find user cart, add item to cart")
 public class CartController {
-    @Autowired 
-    private CartService cartService;
+    private final CartService cartService;
+    private final UserService userService;
 
-    @Autowired 
-    private UserService userService;
+    public CartController(CartService cartService, UserService userService) {
+        this.cartService = cartService;
+        this.userService = userService;
+    }
 
     @GetMapping("")
     @Operation(description="find cart by user id")

@@ -1,0 +1,108 @@
+/* admin.css - admin page. Loaded AFTER site.css, cart.css and orders.css. Prefixed ad- */
+
+.ad-tabs{ display: flex; gap: 10px; margin-bottom: 24px; }
+.ad-tab{
+    padding: 10px 26px;
+    border: none;
+    border-radius: 30px;
+    background: #27235f;
+    color: #c9c6ee;
+    font-family: inherit;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.ad-tab:hover{ background: #2c2870; }
+.ad-tab.active{ background: #ff523b; color: #fff; }
+
+.ad-panel{ padding-bottom: 60px; }
+.ad-toolbar{ display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 18px; }
+
+/* status filter chips */
+.ad-chips{ display: flex; flex-wrap: wrap; gap: 8px; }
+.ad-chip{
+    padding: 7px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 30px;
+    background: transparent;
+    color: #c9c6ee;
+    font-family: inherit;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.ad-chip:hover{ background: rgba(255, 255, 255, 0.08); }
+.ad-chip.active{ background: #3b6cff; border-color: #3b6cff; color: #fff; }
+
+/* tables */
+.ad-table-wrap{ overflow-x: auto; }
+.ad-table{ width: 100%; border-collapse: collapse; color: #c9c6ee; font-size: 14px; }
+.ad-table th{
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    color: #8f8bb8;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+.ad-table td{ padding: 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.07); vertical-align: middle; }
+.ad-table tr:last-child td{ border-bottom: none; }
+.ad-table small{ display: block; color: #8f8bb8; }
+.ad-table b{ color: #fff; font-weight: 500; }
+.ad-price{ color: #ffc107; white-space: nowrap; }
+.ad-thumb{ width: 44px; height: 56px; object-fit: cover; border-radius: 8px; display: block; }
+
+/* buttons */
+.ad-actions{ display: flex; flex-wrap: wrap; gap: 6px; }
+.ad-btn{
+    padding: 6px 14px;
+    border: none;
+    border-radius: 20px;
+    background: #4c4872;
+    color: #fff;
+    font-family: inherit;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.ad-btn:hover:not(:disabled){ background: #5d5990; }
+.ad-btn.ok{ background: #3b6cff; }
+.ad-btn.ok:hover:not(:disabled){ background: #5a82ff; }
+.ad-btn.danger{ background: rgba(255, 82, 59, 0.25); color: #ff7a6b; }
+.ad-btn.danger:hover:not(:disabled){ background: #ff523b; color: #fff; }
+.ad-btn:disabled{ opacity: 0.35; cursor: not-allowed; }
+.ad-btn.big{ padding: 10px 24px; font-size: 14px; background: #ff523b; }
+.ad-btn.big:hover:not(:disabled){ background: #ff6a56; }
+
+/* product dialog */
+dialog.ad-modal{
+    width: min(640px, 92vw);
+    max-height: 90vh;
+    margin: auto;
+    padding: 28px;
+    overflow: auto;
+    border: none;
+    border-radius: 28px;
+    background: #27235f;
+    color: #fff;
+}
+dialog.ad-modal::backdrop{ background: rgba(5, 4, 20, 0.75); }
+.ad-modal h3{ color: #fff; font-size: 20px; font-weight: 500; margin-bottom: 18px; }
+.ad-modal textarea{
+    min-height: 90px;
+    padding: 12px 18px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+    resize: vertical;
+}
+.ad-modal textarea:focus{ border-color: #3b6cff; box-shadow: 0 0 0 3px rgba(59, 108, 255, 0.25); }
+.ad-modal .ad-actions{ justify-content: flex-end; margin-top: 18px; }
+.ad-hint{ color: #8f8bb8; font-size: 12px; }
