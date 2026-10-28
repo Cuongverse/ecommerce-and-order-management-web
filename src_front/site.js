@@ -117,7 +117,13 @@ function productAsset(fileName) {
     return `product_images/${fileName}`;
 }
 
-let products = [...fallbackProducts];
+let products = [...fallbackProducts].map((item, idx) => ({
+    ...item,
+    id: String(idx + 1),
+    priceValue: Number(item.price ?? 0),
+    price: formatUsd(Number(item.price ?? 0)),
+    img: item.img || "product_images/testing.png"
+}));
 
 function resolveProductImage(productName) {
     const text = String(productName || '').toLowerCase();
@@ -348,10 +354,10 @@ setInterval(tickCountdown, 1000);
 /* ---------- filters + search ---------- */
 const filters = {
     suggested: list => list,
-    under:     list => list.filter(p => parseFloat(p.price) < 50),
-    above:     list => list.filter(p => parseFloat(p.price) >= 50),
-    top:       list => list.filter(p => p.rating >= 4).sort((a, b) => b.rating - a.rating),
-    low:       list => [...list].sort((a, b) => parseFloat(a.price) - parseFloat(b.price)),
+    under:     list => list.filter(p => (p.priceValue ?? parseFloat(String(p.price).replace(/[^0-9.-]+/g, ''))) < 50),
+    above:     list => list.filter(p => (p.priceValue ?? parseFloat(String(p.price).replace(/[^0-9.-]+/g, ''))) >= 50),
+    top:       list => [...list].sort((a, b) => Number(b.rating ?? 0) - Number(a.rating ?? 0)),
+    low:       list => [...list].sort((a, b) => (a.priceValue ?? parseFloat(String(a.price).replace(/[^0-9.-]+/g, ''))) - (b.priceValue ?? parseFloat(String(b.price).replace(/[^0-9.-]+/g, '')))),
 };
 
 let activeFilter = 'suggested';
