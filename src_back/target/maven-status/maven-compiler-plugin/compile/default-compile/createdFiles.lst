@@ -15,6 +15,7 @@ com\it3180hust\response\ApiResponse.class
 com\it3180hust\request\RatingRequest.class
 com\it3180hust\request\ReviewRequest.class
 com\it3180hust\controller\TestController.class
+com\it3180hust\DataInitializer.class
 com\it3180hust\controller\AdminProductController.class
 com\it3180hust\repository\UserRepository.class
 com\it3180hust\request\AddItemRequest.class

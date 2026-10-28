@@ -16,9 +16,15 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Index;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 
-@Entity 
+@Entity
+@Table(name = "product", indexes = {
+    @Index(name = "idx_product_category_id", columnList = "category_id"),
+    @Index(name = "idx_product_discounted_price", columnList = "discounted_price")
+})
 public class Product {
     @Id 
     @GeneratedValue (strategy = GenerationType.AUTO)
@@ -27,7 +33,7 @@ public class Product {
     @Column(name="title")
     private String title;
 
-    @Column(name="description")
+    @Column(name = "description", length = 2000)
     private String description;
     
     @Column(name="price")

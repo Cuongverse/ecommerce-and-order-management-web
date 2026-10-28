@@ -21,10 +21,48 @@ const titleCase = s => s.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase(
    3. no img field at all -> product_images/<id>.png
    4. if that file doesn't exist, a gradient placeholder with initials is drawn  */
 const IMG_DIR = '../product_images/';
+const USD_RATE = 24000;
+
+function toUsdValue(rawValue) {
+    const parsed = Number(String(rawValue ?? '').replace(/[^0-9.-]+/g, ''));
+    if (!Number.isFinite(parsed)) return null;
+    return parsed > 1000 ? parsed / USD_RATE : parsed;
+}
+
+function normalizeImageSource(src) {
+    if (!src) return null;
+    const value = String(src).trim();
+    if (!value) return null;
+    if (/^(https?:|data:|\/)/.test(value) || value.startsWith('../')) return value;
+    if (value.startsWith('product_images/') || value.startsWith('images/')) return `../${value}`;
+    if (value.includes('/')) return `../${value}`;
+    return `${IMG_DIR}${value}`;
+}
+
+function preferredLocalImageForName(name) {
+    const text = String(name || '').toLowerCase();
+    const mappings = [
+        { keys: ['pubg'], file: 'Pubg.jpg' },
+        { keys: ['genshin', 'genesis'], file: 'Genshin Impact.webp' },
+        { keys: ['minecraft'], file: 'Minecraft.png' },
+        { keys: ['mobile legends', 'mobile legend'], file: 'Mobile Legend.webp' },
+        { keys: ['valorant', 'vp'], file: 'Valorant.webp' },
+        { keys: ['free fire'], file: 'Free Fire.webp' },
+        { keys: ['nintendo', 'eshop'], file: 'Nitendo.webp' },
+        { keys: ['xbox', 'live'], file: 'Xbox.webp' },
+        { keys: ['playstation'], file: 'PlayStation.webp' },
+        { keys: ['steam'], file: 'Steam.webp' },
+        { keys: ['roblox'], file: 'Roblox.webp' }
+    ];
+
+    const match = mappings.find(m => m.keys.some(key => text.includes(key)));
+    return match ? `${IMG_DIR}${match.file}` : null;
+}
+
+// maintain Tuan's branch for because of better integration with backend
 const imageFor = p => {
-    const src = p.img || `${p.id}.png`;
-    if (/^(https?:|data:|\/|\.\.\/)/.test(src)) return src;
-    return src.startsWith('product_images/') ? '../' + src : IMG_DIR + src;
+    const src = normalizeImageSource(p.img || p.imageUrl || p.image_url || `${p.id}.png`);
+    return src || `${IMG_DIR}testing.png`;
 };
 
 function placeholder(name) {
@@ -102,6 +140,8 @@ function toProduct(p) {
 /* =========================================================
    PICK THE PRODUCT FROM THE URL
    ========================================================= */
+// API_BASE is inherited from Api.js
+let product = null;
 const params = new URLSearchParams(location.search);
 const wantedId = params.get('id') || Object.keys(PRODUCTS)[0];
 

@@ -78,73 +78,105 @@ const slug = s => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g
 // the clicked card's own info travels in the URL, so the product page can show it
 function productUrl(item) {
     const q = new URLSearchParams({ id: item.id || slug(item.name), name: item.name });
-    ['price', 'rating', 'img'].forEach(k => {
+    const chosenImage = item.img || resolveProductImage(item.name);
+    q.set('img', chosenImage);
+    ['price', 'rating'].forEach(k => {
         if (item[k] != null && item[k] !== '') q.set(k, item[k]);
     });
     return 'products/products.html?' + q.toString();
 }
 
-/* =========================================================
-   PRODUCT CARDS - loaded from the backend (GET /api/products)
-   ========================================================= */
-
-// Under / Above filter splits at this price
-const PRICE_SPLIT = 50;
-
-// While the backend is not running, show a few sample cards so the page still looks alive.
-// Set to false when the backend works, or delete SAMPLE_PRODUCTS completely.
-const SHOW_SAMPLE_WHEN_OFFLINE = true;
-
-const SAMPLE_PRODUCTS = [
-    { id: "netflix", name: "Netflix Gift Card",    price: 15,  rating: 4.5, img: "product_images/testing.png" },
-    { id: "spotify", name: "Spotify Premium Card", price: 10,  rating: 4.5, img: "product_images/testing.png" },
-    { id: "amazon",  name: "Amazon Gift Card",     price: 49,  rating: 5,   img: "product_images/testing.png" },
-    { id: "steam-usd", name: "Steam Wallet Card - USD", price: 67, rating: 3.5, img: "product_images/testing.png" },
-];
-
+/* ---------- product cards ---------- */
+// API_BASE is inherited from Api.js
 const productGrid = document.querySelector('.product-grid');
 
-const money = n => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n);
+const fallbackProducts = [
+    { name: "VND Steam Wallet Việt Nam Gift Card", price: 420, rating: 4.5, img: "product_images/testing.png" },
+    { name: "USD Steam Wallet Card Order",         price: 67,  rating: 4.5, img: "product_images/testing.png" },
+    { name: "Euro Steam Wallet Gift Card",         price: 99,  rating: 1.0, img: "product_images/testing.png" },
+    { name: "PUBG PC Pass Steam",                  price: 30,  rating: 4.5, img: "product_images/testing.png" },
+    { name: "Random Steam Game Code",              price: 9,   rating: 2.0, img: "product_images/testing.png" },
+    { name: "Where Winds Meet Top-up",             price: 25,  rating: 4.5, img: "product_images/testing.png" },
+    { name: "Game Top-up Card",                    price: 67,  rating: 3.35, img: "product_images/testing.png" },
+    { name: "Game Top-up Card",                    price: 67,  rating: 3.35, img: "product_images/testing.png" },
+    { name: "Game Top-up Card",                    price: 67,  rating: 3.35, img: "product_images/testing.png" },
+    { name: "Game Top-up Card",                    price: 67,  rating: 3.35, img: "product_images/testing.png" }
+];
+const USD_RATE = 24000;
 
-// product names come from the database, so escape them before putting them in HTML
-const esc = s => String(s).replace(/[&<>"']/g, c => (
-    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
-));
-
-// the backend has no "average rating" field, so we work it out from the list of ratings
-function averageRating(p) {
-    const list = p.ratings || [];
-    if (!list.length) return 0;
-    return list.reduce((sum, r) => sum + r.rating, 0) / list.length;
+function toUsd(value) {
+    const numeric = Number(value ?? 0);
+    return Number.isFinite(numeric) ? numeric / USD_RATE : 0;
 }
 
-// translate a backend product (title, discountedPrice, imageUrl...) into what our cards use
-// imageUrl from the backend is either a full https:// link, or just a file name inside product_images/
-const imageFromBackend = url => {
-    if (!url) return 'product_images/testing.png';
-    if (/^(https?:|data:|\/)/.test(url)) return url;
-    return url.startsWith('product_images/') ? url : 'product_images/' + url;
-};
+function formatUsd(value, digits = 2) {
+    return `$${Number(value ?? 0).toFixed(digits)}`;
+}
 
-function fromBackend(p) {
+function productAsset(fileName) {
+    return `product_images/${fileName}`;
+}
+
+let products = [...fallbackProducts];
+
+function resolveProductImage(productName) {
+    const text = String(productName || '').toLowerCase();
+    const mappings = [
+        { keys: ['pubg'], file: 'Pubg.jpg' },
+        { keys: ['genshin', 'genesis'], file: 'Genshin Impact.webp' },
+        { keys: ['minecraft'], file: 'Minecraft.png' },
+        { keys: ['mobile legends', 'mobile legend'], file: 'Mobile Legend.webp' },
+        { keys: ['valorant', 'vp'], file: 'Valorant.webp' },
+        { keys: ['free fire'], file: 'Free Fire.webp' },
+        { keys: ['nintendo', 'eshop'], file: 'Nitendo.webp' },
+        { keys: ['xbox', 'live'], file: 'Xbox.webp' },
+        { keys: ['playstation'], file: 'PlayStation.webp' },
+        { keys: ['steam'], file: 'Steam.webp' },
+        { keys: ['roblox'], file: 'Roblox.webp' }
+    ];
+
+    const match = mappings.find(m => m.keys.some(key => text.includes(key)));
+    const fileName = match ? match.file : 'testing.png';
+    return productAsset(fileName);
+}
+
+function resolveVoucherImage(panelTitle) {
+    const key = String(panelTitle || '').toLowerCase();
+    if (key.includes('battle')) return productAsset('BattlePass.jpg');
+    if (key.includes('rare')) return productAsset('RareDrops.webp');
+    if (key.includes('skin') || key.includes('weapon')) return productAsset('Skin &Weapons.webp');
+    return productAsset('Skin &Weapons.webp');
+}
+
+function resolveServiceImage(groupTitle) {
+    const key = String(groupTitle || '').toLowerCase();
+    if (key.includes('rank')) return productAsset('RankBoost.webp');
+    if (key.includes('farm')) return productAsset('Farming.webp');
+    if (key.includes('quest') || key.includes('mission')) return productAsset('Quest&Mission.webp');
+    if (key.includes('level') || key.includes('carry')) return productAsset('LevelUp.jpg');
+    return productAsset('RankBoost.webp');
+}
+
+function mapApiProduct(product) {
+    const normalizedPrice = Number(product.discountedPrice ?? product.price ?? 0);
+    const priceUsd = toUsd(normalizedPrice);
+    const productName = product.title || product.name || 'Gift Card';
+    const chosenImage = resolveProductImage(productName);
+
     return {
-        id: p.id,
-        name: p.title,
-        price: p.discountedPrice > 0 ? p.discountedPrice : p.price,
-        rating: averageRating(p),
-        img: imageFromBackend(p.imageUrl),
+        id: String(product.id ?? product.title ?? Math.random().toString(16).slice(2)),
+        name: productName,
+        priceValue: priceUsd > 0 ? priceUsd : 10,
+        price: formatUsd(priceUsd > 0 ? priceUsd : 10),
+        rating: Number(product.numRatings ?? product.rating ?? 4.5),
+        img: chosenImage
     };
 }
 
-let allProducts = [];
-let usingSample = false;
-let activeFilter = 'suggested';
-let searchText = '';
-
-// small message line above the grid (errors, "sample data" notice)
-const notice = document.createElement('p');
-notice.style.cssText = 'text-align:center; margin-bottom:16px; font-size:14px;';
-productGrid.before(notice);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+));
+const money = n => typeof n === 'number' ? `$${n.toFixed(2)}` : String(n ?? '');
 
 function renderProducts(list) {
     productGrid.innerHTML = list.map(p => `
@@ -159,71 +191,140 @@ function renderProducts(list) {
     `).join('');
 }
 
-// the sort menu decides what we ask the backend for
-function buildQuery() {
-    const q = new URLSearchParams({ pageNumber: 0, pageSize: 100 });
-    if (activeFilter === 'under') q.set('maxPrice', PRICE_SPLIT - 1);
-    if (activeFilter === 'above') q.set('minPrice', PRICE_SPLIT);
-    if (activeFilter === 'low')   q.set('sort', 'price_low');
-    return q.toString();
+const shuffle = arr => [...arr].sort(() => Math.random() - 0.5);
+
+function buildLimitedOffers() {
+    const dealGrid = document.querySelector('.deal-grid');
+    if (!dealGrid) return;
+
+    const featured = [...products].filter(p => Number(p.priceValue ?? p.price ?? 0) > 0);
+    const picks = shuffle(featured).slice(0, 3);
+
+    dealGrid.innerHTML = picks.map((item, idx) => {
+        const base = Number(item.priceValue ?? item.price ?? 10);
+        const discount = 20 + (idx * 10) + (Math.random() > 0.5 ? 5 : 0);
+        const finalPrice = base * (1 - discount / 100);
+        const oldPrice = base;
+        return `
+            <a href="${productUrl(item)}" class="deal-card">
+                <span class="deal-badge">-${discount}%</span>
+                <img src="${item.img}" alt="${item.name}">
+                <div class="deal-info">
+                    <h4>${item.name}</h4>
+                    <p><span class="old">${formatUsd(oldPrice)}</span> <span class="new">${formatUsd(finalPrice)}</span></p>
+                </div>
+            </a>
+        `;
+    }).join('');
 }
 
-async function loadProducts() {
-    productGrid.innerHTML = '<p class="no-results">Loading...</p>';
-    notice.textContent = '';
-    usingSample = false;
+const voucherItems = [
+    { name: 'AK-47 Redline skin', category: 'Skin', oldPrice: 18.99, price: 12.99 },
+    { name: 'M416 Glacier skin', category: 'Skin', oldPrice: 16.5, price: 11.25 },
+    { name: 'AWM Dragon skin', category: 'Weapon', oldPrice: 21.0, price: 14.0 },
+    { name: 'Glock Phantom skin', category: 'Weapon', oldPrice: 15.0, price: 10.25 },
+    { name: 'M4A1-S Ghost skin', category: 'Skin', oldPrice: 14.99, price: 9.99 },
+    { name: 'Valorant Prime bundle', category: 'Bundle', oldPrice: 19.0, price: 12.5 },
+    { name: 'PUBG UMP skin pack', category: 'Skin', oldPrice: 17.5, price: 11.5 },
+    { name: 'Free Fire AK47 skin', category: 'Skin', oldPrice: 13.25, price: 8.99 },
+    { name: 'Genshin weapon upgrade pass', category: 'Weapon', oldPrice: 24.0, price: 16.0 },
+    { name: 'Minecraft rare bundle', category: 'Bundle', oldPrice: 12.5, price: 8.75 },
+    { name: 'CS2 knife skin', category: 'Weapon', oldPrice: 29.0, price: 19.0 },
+    { name: 'League skin discount pack', category: 'Skin', oldPrice: 20.0, price: 13.5 }
+];
 
-    try {
-        const page = await apiFetch('/api/products?/search?q=' + buildQuery());
-        allProducts = page.content.map(fromBackend);       // Spring wraps the list in "content"
-    } catch (err) {
-        console.warn('Could not load products:', err.message);
-        if (SHOW_SAMPLE_WHEN_OFFLINE) {
-            usingSample = true;
-            allProducts = SAMPLE_PRODUCTS;
-            notice.style.color = '#ffc107';
-            notice.textContent = 'Showing sample products: ' + err.message;
-        } else {
-            allProducts = [];
-            notice.style.color = '#ff7a6b';
-            notice.textContent = err.message;
-        }
-    }
-    showProducts();
+const serviceItems = [
+    { name: 'Rank boost (Gold to Diamond)', type: 'Rank boost', oldPrice: 24.0, price: 16.99 },
+    { name: 'Valorant win boost', type: 'Rank boost', oldPrice: 19.0, price: 13.5 },
+    { name: 'PUBG squad placement', type: 'Mission', oldPrice: 14.0, price: 9.5 },
+    { name: 'Genshin artifact farming', type: 'Farming', oldPrice: 18.0, price: 12.25 },
+    { name: 'LOL ranked carry', type: 'Rank boost', oldPrice: 26.0, price: 17.5 },
+    { name: 'Map clearing service', type: 'Quest', oldPrice: 16.0, price: 11.0 },
+    { name: 'Daily mission completion', type: 'Mission', oldPrice: 12.0, price: 8.0 },
+    { name: 'Dungeon clear boost', type: 'Quest', oldPrice: 15.5, price: 10.49 },
+    { name: 'Arena win boost', type: 'Rank boost', oldPrice: 21.0, price: 14.25 },
+    { name: 'Weapon upgrade setup', type: 'Service', oldPrice: 11.0, price: 7.25 },
+    { name: 'Character leveling service', type: 'Leveling', oldPrice: 22.0, price: 15.0 },
+    { name: 'Story mode completion', type: 'Mission', oldPrice: 13.25, price: 9.0 },
+    { name: 'Boss farming support', type: 'Farming', oldPrice: 17.5, price: 11.75 },
+    { name: 'Raid carry service', type: 'Quest', oldPrice: 28.5, price: 19.5 }
+];
+
+function renderVoucherGrid() {
+    const container = document.querySelector('.voucher-grid');
+    if (!container) return;
+
+    const panelTitles = ['Skin & Weapon', 'Battle Pass', 'Rare Drops'];
+    const grouped = [
+        voucherItems.slice(0, 4),
+        voucherItems.slice(4, 8),
+        voucherItems.slice(8, 12)
+    ];
+
+    container.innerHTML = grouped.map((group, groupIndex) => {
+        const title = panelTitles[groupIndex];
+        const image = resolveVoucherImage(title);
+
+        return `
+            <div class="voucher-panel">
+                <div class="panel-head">
+                    <h3>${title}</h3>
+                    <a href="" class="view-more">View more</a>
+                </div>
+                ${group.map(item => `
+                    <div class="voucher-item" data-name="${item.name}">
+                        <img src="${image}" alt="${item.name}">
+                        <div class="info">
+                            <h4>${item.name}</h4>
+                            <p class="price">${formatUsd(item.price)} - ${formatUsd(item.oldPrice)}</p>
+                            <p class="stars">★★★★★</p>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }).join('');
 }
 
-// search and "Top rated" are done here, because the backend has no endpoint for them
-function showProducts() {
-    let list = allProducts.filter(p => p.name.toLowerCase().includes(searchText));
+function renderServices() {
+    const track = document.querySelector('.services-track');
+    if (!track) return;
 
-    if (usingSample) {   // sample data did not go through the backend, so filter it here
-        if (activeFilter === 'under') list = list.filter(p => p.price < PRICE_SPLIT);
-        if (activeFilter === 'above') list = list.filter(p => p.price >= PRICE_SPLIT);
-        if (activeFilter === 'low')   list = [...list].sort((a, b) => a.price - b.price);
-    }
-    if (activeFilter === 'top') {
-        list = list.filter(p => p.rating >= 4).sort((a, b) => b.rating - a.rating);
-    }
+    const groups = [
+        { title: 'Rank Boost', items: serviceItems.filter(s => s.type === 'Rank boost').slice(0, 4) },
+        { title: 'Farming', items: serviceItems.filter(s => s.type === 'Farming').slice(0, 4) },
+        { title: 'Mission & Quest', items: serviceItems.filter(s => s.type === 'Mission' || s.type === 'Quest').slice(0, 4) },
+        { title: 'Leveling & Carry', items: serviceItems.filter(s => s.type === 'Leveling' || s.type === 'Service').slice(0, 4) }
+    ];
 
-    if (list.length === 0) {
-        productGrid.innerHTML = '<p class="no-results">No cards found 😕</p>';
-    } else {
-        renderProducts(list);
-    }
+    track.innerHTML = groups.map(g => {
+        const image = resolveServiceImage(g.title);
+        return `
+            <div class="svc-panel">
+                <div class="svc-panel-head">
+                    <h3>${g.title}</h3>
+                    <a href="" class="svc-more">View more</a>
+                </div>
+                ${g.items.map(i => `
+                    <a href="${productUrl({ id: slug(i.name), name: i.name, img: image, price: formatUsd(i.price) })}" class="svc-row">
+                        <img src="${image}" alt="${i.name}">
+                        <div class="svc-info">
+                            <h4>${i.name}</h4>
+                            <p class="svc-price">${formatUsd(i.price)}</p>
+                            <div class="stars" style="--rating: 4.5">★★★★★</div>
+                        </div>
+                    </a>
+                `).join('')}
+            </div>
+        `;
+    }).join('');
 }
 
-document.getElementById('sort-select').addEventListener('change', e => {
-    activeFilter = e.target.value;
-    loadProducts();
-});
-
-// the navbar search box filters the list as you type
-document.querySelector('.search-box input').addEventListener('input', e => {
-    searchText = e.target.value.toLowerCase();
-    showProducts();
-});
-
-loadProducts();
+function refreshStorefrontSections() {
+    buildLimitedOffers();
+    renderVoucherGrid();
+    renderServices();
+}
 
 /* ---------- deal countdown ---------- */
 function endOfWeek() {
@@ -243,6 +344,85 @@ function tickCountdown() {
 }
 tickCountdown();
 setInterval(tickCountdown, 1000);
+
+/* ---------- filters + search ---------- */
+const filters = {
+    suggested: list => list,
+    under:     list => list.filter(p => parseFloat(p.price) < 50),
+    above:     list => list.filter(p => parseFloat(p.price) >= 50),
+    top:       list => list.filter(p => p.rating >= 4).sort((a, b) => b.rating - a.rating),
+    low:       list => [...list].sort((a, b) => parseFloat(a.price) - parseFloat(b.price)),
+};
+
+let activeFilter = 'suggested';
+let searchText = '';
+
+function applyFilters() {
+    const searched = products.filter(p => p.name.toLowerCase().includes(searchText));
+    const result = filters[activeFilter](searched);
+
+    if (!productGrid) {
+        return;
+    }
+
+    if (result.length === 0) {
+        productGrid.innerHTML = '<p class="no-results">No cards found 😕</p>';
+    } else {
+        renderProducts(result);
+    }
+}
+
+document.getElementById('sort-select').addEventListener('change', e => {
+    activeFilter = e.target.value;
+    applyFilters();
+});
+
+const searchInput = document.querySelector('.search-box input');
+if (searchInput) {
+    searchInput.addEventListener('input', e => {
+        searchText = e.target.value.toLowerCase();
+        applyFilters();
+    });
+}
+
+async function loadProducts() {
+    try {
+        const response = await fetch(`${API_BASE}/api/products?pageNumber=0&pageSize=20`, {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' },
+            credentials: 'omit'
+        });
+
+        if (!response.ok) {
+            throw new Error(`API responded with ${response.status}`);
+        }
+
+        const payload = await response.json();
+        const items = Array.isArray(payload) ? payload : (payload.content || []);
+
+        if (Array.isArray(items) && items.length > 0) {
+            products = items.map(mapApiProduct);
+            applyFilters();
+            refreshStorefrontSections();
+            return;
+        }
+    } catch (error) {
+        console.warn('Falling back to local sample products:', error);
+    }
+
+    products = [...fallbackProducts].map((item, idx) => ({
+        ...item,
+        id: String(idx + 1),
+        priceValue: Number(item.price ?? 0),
+        price: formatUsd(Number(item.price ?? 0)),
+        img: resolveProductImage(item.name)
+    }));
+    applyFilters();
+    refreshStorefrontSections();
+}
+
+applyFilters();
+loadProducts();
 
 /* ---------- deal-of-the-week + voucher cards -> product page ---------- */
 document.querySelectorAll('.deal-card, .voucher-item').forEach(card => {
