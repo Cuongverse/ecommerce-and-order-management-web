@@ -81,146 +81,48 @@ Hệ thống được thiết kế theo mô hình kiểm soát truy cập dựa 
 
 ---
 
-## 6. HƯỚNG DẪN CÀI ĐẶT & CHẠY THỬ (GETTING STARTED)
+## 6. HƯỚNG DẪN CÀI ĐẶT & CHẠY THỬ (QUICK START)
 
-### 6.1. Yêu cầu môi trường (Prerequisites)
-* **Java JDK:** Khuyến nghị **Java 17 LTS** (Eclipse Adoptium Temurin hoặc Oracle JDK 17).
-* **Cơ sở dữ liệu:** **MySQL Server 8.0** (cổng mặc định `3306`) hoặc sử dụng **Docker & Docker Compose**.
-* **Công cụ Frontend:** VS Code với extension **Live Server** (hoặc Python 3 / Node.js để chạy local static server).
-* **Git:** Phiên bản mới nhất.
+### 6.1. Yêu cầu & Chuẩn bị CSDL
+* **Môi trường:** Java JDK 17 LTS, MySQL 8.0, Git.
+* **Tạo Database trong MySQL:**
+  ```sql
+  CREATE DATABASE IF NOT EXISTS testdb;
+  ```
+  *(Kiểm tra tài khoản/mật khẩu MySQL tại [`src_back/src/main/resources/application.properties`](src_back/src/main/resources/application.properties))*.
 
 ---
 
-### 6.2. Cấu hình & Khởi chạy Cơ sở dữ liệu (Database Setup)
+### 6.2. Khởi chạy hệ thống
 
-#### Cách 1: Sử dụng MySQL Server cài trực tiếp trên máy (Khuyến nghị)
-1. Đảm bảo dịch vụ MySQL đang chạy trên máy (cổng `3306`).
-2. Mở MySQL Client/Workbench và tạo CSDL `testdb`:
-   ```sql
-   CREATE DATABASE IF NOT EXISTS testdb CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-   ```
-3. Kiểm tra thông tin đăng nhập trong file [`src_back/src/main/resources/application.properties`](src_back/src/main/resources/application.properties):
-   ```properties
-   spring.datasource.url=jdbc:mysql://localhost:3306/testdb?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8
-   spring.datasource.username=root
-   spring.datasource.password=160422   # Đổi thành mật khẩu root MySQL trên máy của bạn
-   ```
-
-#### Cách 2: Sử dụng Docker Compose
-Nếu máy bạn có cài Docker:
-```bash
-docker compose up -d
+#### Cách 1: Khởi chạy tự động (Windows - Khuyên dùng)
+Nhấp đúp vào file script tiện ích:
+```cmd
+run-app.bat
 ```
-*(Lệnh này sẽ tự động khởi động một container MySQL 8.0 với database `testdb` sẵn sàng).*
 
----
-
-### 6.3. Khởi chạy Backend (Spring Boot API Server)
-
-1. Mở Terminal và di chuyển vào thư mục backend:
-   ```bash
+#### Cách 2: Khởi chạy thủ công qua Terminal
+1. **Chạy Backend:**
+   ```powershell
    cd src_back
+   .\mvnw.cmd spring-boot:run
+   # Backend API chạy tại: http://localhost:5432
    ```
-2. Biên dịch và tải các thư viện cần thiết:
-   * **Trên Windows (PowerShell / CMD):**
-     ```powershell
-     .\mvnw.cmd clean compile
-     ```
-   * **Trên Linux / macOS:**
-     ```bash
-     ./mvnw clean compile
-     ```
-3. Chạy ứng dụng Spring Boot:
-   * **Trên Windows:**
-     ```powershell
-     .\mvnw.cmd spring-boot:run
-     ```
-   * **Trên Linux / macOS:**
-     ```bash
-     ./mvnw spring-boot:run
-     ```
-4. Khi terminal thông báo `Started EcommerceApplication in ... seconds`, API Backend đã sẵn sàng tại:
-   👉 **`http://localhost:5432`**
-
-> **💡 Cơ chế nạp dữ liệu mẫu tự động (`DataInitializer`):**  
-> Khi ứng dụng khởi chạy lần đầu tiên với CSDL rỗng, hệ thống sẽ tự động khởi tạo danh mục, các gói sản phẩm gaming (Steam, PUBG, Valorant, Genshin Impact...) và tài khoản mẫu sẵn sàng sử dụng.
+2. **Chạy Frontend:**
+   * Mở bằng extension **Live Server** trong VS Code (nhấp chuột phải [`src_front/site.html`](src_front/site.html) $\rightarrow$ *Open with Live Server*).
+   * Hoặc dùng Python: `cd src_front && python -m http.server 8080` $\rightarrow$ truy cập `http://localhost:8080/site.html`.
 
 ---
 
-### 6.4. Khởi chạy Frontend (Storefront & Admin)
-#### Cách 1: Dùng VS Code Live Server (Nhanh & Tiện nhất)
-1. Cài extension **Live Server** trong VS Code.
-2. Nhấp chuột phải vào file [`src_front/site.html`](src_front/site.html) $\rightarrow$ chọn **"Open with Live Server"**.
-3. Trang web sẽ tự động mở trên trình duyệt tại địa chỉ:
-   👉 **`http://127.0.0.1:5500/src_front/site.html`**
+### 6.3. Tài khoản thử nghiệm (Default Accounts)
 
-#### Cách 2: Dùng Python HTTP Server
-```bash
-cd src_front
-python -m http.server 8080
-```
-Sau đó truy cập: `http://localhost:8080/site.html`.
+| Vai trò | Email đăng nhập | Mật khẩu | Quyền hạn & Chức năng |
+| :--- | :--- | :--- | :--- |
+| **Quản trị viên (Admin)** | `admin@giftcard.com` | `admin123` | Quản lý sản phẩm, tồn kho và duyệt đơn hàng (`admin.html`). |
+| **Khách hàng (Customer)** | `user@giftcard.com` | `user123` | Mua thẻ game, giỏ hàng (`cart.html`), tra cứu đơn (`orders.html`). |
 
 ---
 
-### 6.5. Tài khoản thử nghiệm (Default Accounts)
-
-Hệ thống đã chuẩn bị sẵn 2 tài khoản mặc định được mã hóa mật khẩu an toàn:
-
-| Loại tài khoản | Email | Mật khẩu | Quyền hạn (Role) | Chức năng truy cập |
-| :--- | :--- | :--- | :--- | :--- |
-| **Quản trị viên (Admin)** | `admin@giftcard.com` | `admin123` | `ROLE_ADMIN` | Quản lý kho, thêm/sửa/xóa sản phẩm, cập nhật trạng thái đơn hàng (`admin.html`). |
-| **Khách hàng (Customer)** | `user@giftcard.com` | `user123` | `ROLE_USER` | Mua hàng, giỏ hàng, đặt hàng thanh toán và tra cứu đơn hàng cá nhân. |
-
----
-
-### 6.6. Hướng dẫn trải nghiệm các luồng nghiệp vụ chính
-
-```text
-[Trang chủ site.html] ────► [Auth.html (Đăng nhập/Đăng ký)]
-         │
-         ├──► [products.html (Tìm kiếm, Lọc & Xem chi tiết)] ──► Thêm vào giỏ
-         │                                                            │
-         ├──► [Cart.html (Giỏ hàng)] ◄────────────────────────────────┘
-         │          │
-         │          └──► [Checkout.html (Thanh toán & Nhập địa chỉ)]
-         │                      │
-         ├──► [Orders.html] ◄───┘ (Xem lịch sử tiến trình đơn hàng)
-         │
-         └──► [Admin.html] (Quản lý sản phẩm & duyệt đơn - Quyền ADMIN)
-```
-
-1. **Đăng nhập / Đăng ký ([`Auth.html`](src_front/Auth.html)):**
-   * Nhấp biểu tượng Avatar ở góc trên bên phải thanh điều hướng (Navbar).
-   * Đăng nhập với tài khoản `user@giftcard.com` (hoặc đăng ký tài khoản mới). Sau khi đăng nhập, hệ thống tự động lưu trữ JWT token và hiển thị tên người dùng.
-2. **Duyệt & Tìm kiếm sản phẩm ([`site.html`](src_front/site.html) & [`products.html`](src_front/products/products.html)):**
-   * Sử dụng ô tìm kiếm trên Navbar để tìm kiếm theo tên, nhãn hàng hoặc danh mục.
-   * Lọc sản phẩm theo khoảng giá, danh mục gaming, sắp xếp theo giá tăng/giảm hoặc đánh giá cao nhất.
-3. **Giỏ hàng & Đặt hàng ([`Cart.html`](src_front/Cart.html) & [`Checkout.html`](src_front/Checkout.html)):**
-   * Bấm **Add to Cart** tại trang chi tiết sản phẩm.
-   * Nhấp biểu tượng Giỏ hàng trên Navbar để kiểm tra các mặt hàng, điều chỉnh số lượng hoặc xóa sản phẩm.
-   * Chọn **Proceed to Checkout** để nhập địa chỉ giao hàng và xác nhận tạo đơn hàng.
-4. **Theo dõi đơn hàng ([`Orders.html`](src_front/Orders.html)):**
-   * Bấm **My Orders** trên menu để theo dõi danh sách đơn hàng đã đặt cùng trạng thái cập nhật (Pending, Confirmed, Shipped, Delivered).
-5. **Trang Quản trị Back-office ([`Admin.html`](src_front/Admin.html)):**
-   * Đăng nhập tài khoản Admin: `admin@giftcard.com` / `admin123`.
-   * Menu **Admin** sẽ xuất hiện trên thanh Navbar.
-   * **Quản lý sản phẩm:** Thêm sản phẩm mới với phân cấp danh mục 3 cấp, hình ảnh, giá niêm yết, số lượng kho; chỉnh sửa và xóa sản phẩm.
-   * **Quản trị đơn hàng:** Xem toàn bộ đơn hàng của khách hàng trên hệ thống và chuyển đổi trạng thái đơn (Confirm, Ship, Deliver, Cancel).
-
----
-
-### 6.7. Xử lý sự cố thường gặp (Troubleshooting)
-
-* **Lỗi `UnsupportedClassVersionError` (Xung đột phiên bản Java):**
-  * *Nguyên nhân:* Dự án được biên dịch bằng Java phiên bản cao hơn nhưng runtime chạy ở phiên bản thấp hơn.
-  * *Xử lý:* Đảm bảo biến môi trường `JAVA_HOME` trỏ về JDK 17, sau đó chạy `cd src_back && .\mvnw.cmd clean compile`.
-* **Lỗi `Communications link failure` (Không kết nối được MySQL):**
-  * *Nguyên nhân:* Dịch vụ MySQL chưa được bật trên máy.
-  * *Xử lý:* Mở Windows Services (`services.msc`), tìm dịch vụ MySQL và chọn **Start**.
-* **Lỗi `Access denied for user 'root'@'localhost'`:**
-  * *Nguyên nhân:* Mật khẩu MySQL trong file `application.properties` không khớp với mật khẩu MySQL trên máy của bạn.
-  * *Xử lý:* Mở file [`src_back/src/main/resources/application.properties`](src_back/src/main/resources/application.properties), sửa `spring.datasource.password` thành mật khẩu chính xác của tài khoản root MySQL trên máy.
-* **Giao diện không hiển thị thẻ sản phẩm (Trắng trang / Blank sections):**
-  * *Nguyên nhân:* Trình duyệt lưu cache file script cũ.
-  * *Xử lý:* Nhấn **`Ctrl + F5`** (hoặc `Ctrl + Shift + R`) trên trình duyệt để buộc tải lại script mới nhất.
+### 6.4. Lưu ý khi sử dụng
+* **Cổng dịch vụ:** Backend chạy cổng **`5432`**, Frontend chạy cổng **`5500`** (Live Server) hoặc **`8080`**.
+* **Làm mới giao diện:** Nếu trang bị trắng hoặc không nhận script mới, nhấn **`Ctrl + F5`** trên trình duyệt để xóa cache.

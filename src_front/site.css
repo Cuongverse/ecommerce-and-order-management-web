@@ -419,7 +419,15 @@ p{
     flex-wrap: wrap;
     justify-content: center;    
     gap: 28px;
-    
+    min-height: 120px;
+}
+
+.no-results {
+    color: #e6e4ff;
+    font-size: 18px;
+    padding: 30px 20px;
+    text-align: center;
+    width: 100%;
 }
 
 .product-card{
