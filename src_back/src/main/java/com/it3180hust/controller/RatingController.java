@@ -2,7 +2,6 @@ package com.it3180hust.controller;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,11 +25,13 @@ import jakarta.validation.Valid;
 @RestController 
 @RequestMapping("/api/ratings")
 public class RatingController {
-    @Autowired 
-    private UserService userService;
+    private final UserService userService;
+    private final RatingService ratingService;
 
-    @Autowired 
-    private RatingService ratingService;
+    public RatingController(UserService userService, RatingService ratingService) {
+        this.userService = userService;
+        this.ratingService = ratingService;
+    }
 
     @PostMapping("/create")
     public ResponseEntity<Rating> createRating(@Valid @RequestBody RatingRequest req,

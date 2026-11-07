@@ -1,6 +1,5 @@
 package com.it3180hust.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -25,11 +24,13 @@ import com.it3180hust.service.UserService;
 @RestController 
 @RequestMapping("/api/cart_items")
 public class CartItemController {
-    @Autowired 
-    UserService userService;
+    private final UserService userService;
+    private final CartItemService cartItemService;
 
-    @Autowired 
-    CartItemService cartItemService;
+    public CartItemController(UserService userService, CartItemService cartItemService) {
+        this.userService = userService;
+        this.cartItemService = cartItemService;
+    }
 
     @DeleteMapping("/delete/{cartItemId}")
     ResponseEntity<ApiResponse> deleteCartItem(@PathVariable Long cartItemId,

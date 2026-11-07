@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Orders | GiftCard</title>
+    <link rel="stylesheet" href="site.css">
+    <link rel="stylesheet" href="cart.css">
+    <link rel="stylesheet" href="orders.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- ================= header (same as site.html) ================= -->
+<div class="header">
+    <div class="container">
+        <div class="navbar">
+            <div class="logo">
+                <a href="site.html"><img src="header_images/logo.png" width="250px" alt="GiftCards"></a>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="site.html">Home</a></li>
+                    <li><a href="site.html#featured">Gift Cards</a></li>
+                    <li><a href="site.html#vouchers">Vouchers</a></li>
+                    <li><a href="orders.html">My Orders</a></li>
+                    <li><a href="admin.html">Admin</a></li>
+                </ul>
+            </nav>
+
+            <div class="nav-actions">
+                <div class="search-box">
+                    <input type="text" placeholder="Search gift cards...">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <circle cx="11" cy="11" r="7"/>
+                        <line x1="16.5" y1="16.5" x2="21" y2="21"/>
+                    </svg>
+                </div>
+                <button class="icon-btn" aria-label="Cart">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="9" cy="20" r="1.5"/>
+                        <circle cx="18" cy="20" r="1.5"/>
+                        <path d="M2 3h3l2.5 12h11l2-8H6"/>
+                    </svg>
+                </button>
+                <button class="icon-btn" aria-label="Balance">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="9"/>
+                        <path d="M14.5 9.5c-.5-1-1.5-1.5-2.5-1.5-1.4 0-2.5.8-2.5 2s1 1.8 2.5 2 2.5.8 2.5 2-1.1 2-2.5 2c-1 0-2-.5-2.5-1.5M12 6v2M12 16v2"/>
+                    </svg>
+                </button>
+                <button class="avatar-btn" aria-label="Profile">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <circle cx="12" cy="8" r="4"/>
+                        <path d="M4 21c0-4 3.5-7 8-7s8 3 8 7"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ================= orders ================= -->
+<main class="ct-wrap">
+    <div class="ct-head">
+        <h1>My orders</h1>
+        <span id="ct-count"></span>
+    </div>
+
+    <div class="ct-state" id="ct-state"><p>Loading your orders...</p></div>
+
+    <!-- chart: how many orders in each status -->
+    <section class="ct-card od-dash" id="od-dash" hidden>
+        <h3>Orders by status</h3>
+        <div id="od-bars"></div>
+    </section>
+
+    <div class="ct-layout" id="ct-layout" hidden>
+        <section class="ct-card" id="od-list"></section>
+        <aside class="ct-card ct-summary" id="od-detail">
+            <p class="od-hint">Select an order to see its details.</p>
+        </aside>
+    </div>
+</main>
+
+<footer class="footer ct-footer">
+    <div class="container">
+        <div class="footer-bottom">
+            <p>&copy; 2026 GiftCards. All rights reserved.</p>
+        </div>
+    </div>
+</footer>
+
+<script src="api.js"></script>
+<script>
+const $ = sel => document.querySelector(sel);
+const money = n => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n);
+const esc = s => String(s).replace(/[&<>"']/g, c => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+));
+
+// full link as-is, or a file name (with or without the product_images/ folder in front)
+const imageFor = url => {
+    if (!url) return 'product_images/testing.png';
+    if (/^(https?:|data:|\/)/.test(url)) return url;
+    return url.startsWith('product_images/') ? url : 'product_images/' + url;
+};
+
+/* ---------- order statuses ---------- */
+const STEPS = ['PENDING', 'CONFIRMED', 'SHIPPED', 'DELIVERED'];     // the happy path
+const STATUSES = [...STEPS, 'CANCELLED'];
+const LABEL = { PENDING: 'Pending', CONFIRMED: 'Confirmed', SHIPPED: 'Shipped', DELIVERED: 'Delivered', CANCELLED: 'Cancelled' };
+
+// the backend also uses PLACED / CREATED for "just ordered": treat them as PENDING
+const norm = s => {
+    const u = String(s || '').toUpperCase();
+    return (u === 'PLACED' || u === 'CREATED') ? 'PENDING' : u;
+};
+const badge = s => `<span class="od-badge ${norm(s)}">${esc(LABEL[norm(s)] || s || 'Unknown')}</span>`;
+
+function progress(status, labeled) {
+    const s = norm(status);
+    if (s === 'CANCELLED') return `<div class="od-cancelled">Order cancelled</div>`;
+    const idx = STEPS.indexOf(s);
+    if (idx < 0) return '';
+    return `<div class="od-steps${labeled ? ' labeled' : ''}">` + STEPS.map((step, i) => {
+        const cls = (i < idx || s === 'DELIVERED') ? 'done' : (i === idx ? 'current' : '');
+        return `<div class="od-step ${cls}"><i></i><span>${LABEL[step]}</span></div>`;
+    }).join('') + `</div>`;
+}
+
+// the backend may send dates as "2026-10-24T10:15:30" or as [2026,10,24,10,15,30]
+const dateOf = v => v ? (Array.isArray(v) ? new Date(v[0], v[1] - 1, v[2], v[3] || 0, v[4] || 0) : new Date(v)) : null;
+const fmt = v => {
+    const d = dateOf(v);
+    return d && !isNaN(d) ? d.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) : '';
+};
+
+// money fields: total after discount if there is one, else the plain total
+const orderTotal = o => o.totalDiscountedPrice > 0 ? o.totalDiscountedPrice : (o.totalPrice || 0);
+
+let orders = [];
+let selected = null;
+
+function showState(html) {
+    $('#ct-state').innerHTML = html;
+    $('#ct-state').hidden = false;
+    $('#ct-layout').hidden = true;
+    $('#od-dash').hidden = true;
+}
+
+/* ---------- chart ---------- */
+function renderDash() {
+    const counts = Object.fromEntries(STATUSES.map(s => [s, 0]));
+    orders.forEach(o => { if (counts[norm(o.orderStatus)] !== undefined) counts[norm(o.orderStatus)]++; });
+    const max = Math.max(1, ...Object.values(counts));
+
+    $('#od-bars').innerHTML = STATUSES.map(s => `
+        <div class="od-bar-row">
+            <span>${LABEL[s]}</span>
+            <div class="od-bar"><b class="${s}" style="width:${counts[s] / max * 100}%"></b></div>
+            <span>${counts[s]}</span>
+        </div>`).join('');
+    $('#od-dash').hidden = false;
+}
+
+/* ---------- list ---------- */
+function renderList() {
+    $('#od-list').innerHTML = orders.map(o => `
+        <button type="button" class="od-card${o.id === selected ? ' active' : ''}" data-id="${o.id}">
+            <div class="od-card-top"><b>Order #${o.id}</b>${badge(o.orderStatus)}</div>
+            <div class="od-meta">${esc(fmt(o.orderDate || o.createdAt))} · ${o.totalItem || (o.orderItems || []).length} item(s)</div>
+            ${progress(o.orderStatus, false)}
+            <div class="od-card-total">${money(orderTotal(o))}</div>
+        </button>`).join('');
+}
+
+/* ---------- details: GET /api/orders/{id} ---------- */
+async function selectOrder(id) {
+    selected = id;
+    renderList();
+    const box = $('#od-detail');
+    box.innerHTML = '<p class="od-hint">Loading...</p>';
+
+    try {
+        const o = await apiFetch('/api/orders/' + id);
+        if (selected !== id) return;                      // the user already clicked another order
+
+        const a = o.shippingAddress || {};
+        const pay = o.paymenDetails || {};                // (sic) that is how the backend spells it
+        const original = o.totalPrice || 0;
+        const total = orderTotal(o);
+
+        box.innerHTML = `
+            <div class="od-detail-head"><h3>Order #${o.id}</h3>${badge(o.orderStatus)}</div>
+            ${progress(o.orderStatus, true)}
+
+            <div class="od-section">
+                <h4>Items</h4>
+                ${(o.orderItems || []).map(i => {
+                    const p = i.product || {};
+                    const line = i.discountedPrice > 0 ? i.discountedPrice : (i.price || 0);
+                    return `
+                    <div class="od-line">
+                        <img src="${esc(imageFor(p.imageUrl))}" alt="" onerror="this.onerror=null;this.src='product_images/testing.png'">
+                        <div>${esc(p.title || 'Product')}<small>${i.size ? esc(i.size) + ' · ' : ''}Qty ${i.quantity}</small></div>
+                        <span>${money(line)}</span>
+                    </div>`;
+                }).join('') || '<p class="od-hint">No items.</p>'}
+            </div>
+
+            <div class="od-section">
+                <h4>Shipping address</h4>
+                <div class="od-addr">
+                    ${esc(((a.firstName || '') + ' ' + (a.lastName || '')).trim() || '—')}<br>
+                    ${esc(a.streetAddress || '')}<br>
+                    ${esc([a.city, a.province, a.zipCode].filter(Boolean).join(', '))}<br>
+                    ${esc(a.mobile || '')}
+                </div>
+            </div>
+
+            <div class="od-section">
+                <div class="ct-row"><span>Placed on</span><span>${esc(fmt(o.orderDate || o.createdAt))}</span></div>
+                ${pay.status ? `<div class="ct-row"><span>Payment</span><span>${esc(pay.status)}</span></div>` : ''}
+                <div class="ct-row"><span>Original price</span><span>${money(original)}</span></div>
+                <div class="ct-row"><span>Discount</span><span>${money(Math.max(0, original - total))}</span></div>
+                <div class="ct-row ct-total"><span>Total</span><span>${money(total)}</span></div>
+            </div>`;
+    } catch (err) {
+        box.innerHTML = `<p class="ct-error">${esc(err.message)}</p>`;
+    }
+}
+
+$('#od-list').addEventListener('click', e => {
+    const card = e.target.closest('.od-card');
+    if (card) selectOrder(Number(card.dataset.id));
+});
+
+/* ---------- start: GET /api/orders/user ---------- */
+(async function init() {
+    if (!Auth.isLoggedIn()) {
+        showState(`<p>Log in to see your orders.</p>
+                   <a class="ct-btn primary" href="auth.html?next=${encodeURIComponent(location.href)}">Log in</a>`);
+        return;
+    }
+    try {
+        orders = await apiFetch('/api/orders/user');
+        orders.sort((a, b) => b.id - a.id);              // newest first
+    } catch (err) {
+        showState(`<p class="ct-error">${esc(err.message)}</p>`);
+        return;
+    }
+
+    if (!orders.length) {
+        showState(`<p>You have no orders yet.</p><a class="ct-btn primary" href="site.html">Browse gift cards</a>`);
+        return;
+    }
+
+    $('#ct-count').textContent = orders.length + (orders.length === 1 ? ' order' : ' orders');
+    $('#ct-state').hidden = true;
+    $('#ct-layout').hidden = false;
+    renderDash();
+    selectOrder(orders[0].id);
+})();
+</script>
+</body>
+</html>

@@ -37,7 +37,7 @@ public class JwtValidator extends OncePerRequestFilter{
             // cắt bỏ tiền tố "Bearer " để lấy chuỗi mã JWT thuần
             jwt = jwt.substring(7);  // 
             try{
-                // tạo khóa bí mật dùng HMAC-SHA
+                // tạo khóa bí mật thuật toán HMAC-SHA
                 SecretKey key = Keys.hmacShaKeyFor(JwtConstant.SECRET_KEY.getBytes());
                 
                 // dùng thư viện JJWT để xác minh SigningKey bằng "key"

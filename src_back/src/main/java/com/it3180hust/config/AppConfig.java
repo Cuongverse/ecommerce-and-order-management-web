@@ -1,6 +1,5 @@
 package com.it3180hust.config;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -17,7 +16,6 @@ import org.springframework.security.web.authentication.www.BasicAuthenticationFi
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
 
 @Configuration
 @EnableWebSecurity 
@@ -37,6 +35,8 @@ public class AppConfig{
 
             // Endpoint permissions
             .authorizeHttpRequests(auth -> auth
+                // Public auth endpoints
+                .requestMatchers("/auth/**").permitAll()
                 // Admin endpoints (requires ROLE_ADMIN)
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
@@ -74,9 +74,7 @@ public class AppConfig{
         cfg.setAllowCredentials(true);
         cfg.setMaxAge(3600L);
         
-        // lưu trữ Map giữa URL và cấu hình CORS (CorsConfiguration)
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        // ý nghĩa: áp dụng toàn bộ luật cors trong biến cfg cho mọi endpoint (/**) của server
         source.registerCorsConfiguration("/**", cfg);
         return source;
     }

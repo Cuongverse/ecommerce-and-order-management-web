@@ -1,0 +1,100 @@
+/* orders.css - status badges, progress bars, chart, order cards.
+   Loaded AFTER site.css and cart.css (it reuses .ct-wrap, .ct-card, ...). Prefixed od- */
+
+/* ---------- status badges ---------- */
+.od-badge{
+    display: inline-block;
+    padding: 3px 12px;
+    border-radius: 20px;
+    background: rgba(255, 193, 7, 0.18);
+    color: #ffc107;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+.od-badge.CONFIRMED{ background: rgba(59, 108, 255, 0.28); color: #9db6ff; }
+.od-badge.SHIPPED{ background: rgba(155, 107, 255, 0.28); color: #c5a8ff; }
+.od-badge.DELIVERED{ background: rgba(45, 212, 167, 0.2); color: #2dd4a7; }
+.od-badge.CANCELLED{ background: rgba(255, 82, 59, 0.2); color: #ff7a6b; }
+
+/* ---------- progress bar (4 segments) ---------- */
+.od-steps{ display: flex; gap: 6px; }
+.od-step{ flex: 1; min-width: 0; }
+.od-step i{ display: block; height: 6px; border-radius: 4px; background: #4a4670; }
+.od-step.done i{ background: #2dd4a7; }
+.od-step.current i{ background: #3b6cff; }
+.od-step span{
+    display: none;
+    margin-top: 6px;
+    color: #8f8bb8;
+    font-size: 11px;
+    text-align: center;
+}
+.od-steps.labeled .od-step span{ display: block; }
+.od-step.done span, .od-step.current span{ color: #fff; }
+
+.od-cancelled{
+    padding: 6px 12px;
+    border-radius: 10px;
+    background: rgba(255, 82, 59, 0.15);
+    color: #ff7a6b;
+    font-size: 13px;
+    text-align: center;
+}
+
+/* ---------- status chart ---------- */
+.od-dash{ margin-bottom: 24px; }
+.od-bar-row{
+    display: grid;
+    grid-template-columns: 110px 1fr 36px;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+    color: #c9c6ee;
+    font-size: 14px;
+}
+.od-bar-row:last-child{ margin-bottom: 0; }
+.od-bar{ height: 12px; border-radius: 8px; background: #1e1b4b; overflow: hidden; }
+.od-bar b{ display: block; height: 100%; border-radius: 8px; background: #ffc107; transition: width 0.4s; }
+.od-bar b.CONFIRMED{ background: #3b6cff; }
+.od-bar b.SHIPPED{ background: #9b6bff; }
+.od-bar b.DELIVERED{ background: #2dd4a7; }
+.od-bar b.CANCELLED{ background: #ff523b; }
+.od-bar-row span:last-child{ color: #fff; text-align: right; }
+
+/* ---------- order cards ---------- */
+.od-card{
+    display: block;
+    width: 100%;
+    margin-bottom: 14px;
+    padding: 18px 20px;
+    text-align: left;
+    background: #1e1b4b;
+    border: 1px solid transparent;
+    border-radius: 14px;
+    color: #fff;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+}
+.od-card:last-child{ margin-bottom: 0; }
+.od-card:hover{ background: #2c2870; }
+.od-card.active{ border-color: #3b6cff; background: #2c2870; }
+.od-card-top{ display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.od-card-top b{ font-size: 16px; font-weight: 500; }
+.od-meta{ margin: 6px 0 14px; color: #8f8bb8; font-size: 13px; }
+.od-card-total{ margin-top: 12px; color: #ffc107; font-weight: 600; text-align: right; }
+
+/* ---------- detail panel ---------- */
+.od-detail-head{ display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 18px; }
+.od-detail-head h3{ margin-bottom: 0; }
+.od-section{ margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(255, 255, 255, 0.1); }
+.od-section h4{ margin-bottom: 10px; color: #fff; font-size: 14px; font-weight: 500; }
+.od-addr{ color: #c9c6ee; font-size: 14px; line-height: 1.7; }
+.od-line{ display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.od-line img{ width: 48px; height: 60px; flex-shrink: 0; object-fit: cover; border-radius: 8px; }
+.od-line div{ flex: 1; min-width: 0; color: #fff; font-size: 14px; }
+.od-line small{ display: block; margin-top: 2px; color: #8f8bb8; }
+.od-line span{ color: #ffc107; white-space: nowrap; }
+.od-hint{ color: #8f8bb8; font-size: 14px; }
