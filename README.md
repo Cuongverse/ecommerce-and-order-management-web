@@ -4,7 +4,7 @@
 
 ---
 
-## 1. GIỚI THIỆU DỰ ÁN (PROJECT OVERVIEW)
+## 1. GIỚI THIỆU DỰ ÁN
 
 Hệ thống Thương mại Điện tử và Quản trị Vận hành Kho Vận là nền tảng web hướng dịch vụ kết hợp giữa kênh bán hàng trực tuyến (**Storefront**) và cổng quản trị tác nghiệp nội bộ (**Back-office OMS**). 
 
