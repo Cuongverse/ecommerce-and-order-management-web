@@ -13,19 +13,17 @@ import com.it3180hust.request.AddItemRequest;
 
 @Service 
 public class CartServiceImplementation implements CartService {
-
     private CartRepository cartRepository;
     private CartItemService cartItemService;
     private ProductService productService;
     private CartItemRepository cartItemRepository;
 
-    
-
     public CartServiceImplementation(CartRepository cartRepository, CartItemService cartItemService,
-            ProductService productService) {
+            ProductService productService, CartItemRepository cartItemRepository) {
         this.cartRepository = cartRepository;
         this.cartItemService = cartItemService;
         this.productService = productService;
+        this.cartItemRepository = cartItemRepository;
     }
 
     @Override

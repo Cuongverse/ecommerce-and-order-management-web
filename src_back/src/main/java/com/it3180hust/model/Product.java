@@ -19,6 +19,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Index;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 
 @Entity
 @Table(name = "product", indexes = {
@@ -29,6 +30,9 @@ public class Product {
     @Id 
     @GeneratedValue (strategy = GenerationType.AUTO)
     private Long id;
+
+    @Version
+    private Long version;
 
     @Column(name="title")
     private String title;
@@ -100,6 +104,14 @@ public class Product {
         this.numRatings = numRatings;
         this.category = category;
         this.createdAt = createdAt;
+    }
+
+    public Long getVersion() {
+        return version;
+    }
+
+    public void setVersion(Long version) {
+        this.version = version;
     }
 
     public Long getId() {

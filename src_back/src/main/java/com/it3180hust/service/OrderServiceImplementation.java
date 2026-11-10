@@ -23,6 +23,9 @@ import com.it3180hust.repository.OrderRepository;
 import com.it3180hust.repository.ProductRepository;
 import com.it3180hust.repository.UserRepository;
 
+import jakarta.transaction.Transactional;
+
+@Transactional 
 @Service 
 public class OrderServiceImplementation implements OrderService {
 
