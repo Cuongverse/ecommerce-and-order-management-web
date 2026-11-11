@@ -1,15 +1,26 @@
 package com.it3180hust.exception;
 
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import com.it3180hust.response.AuthResponse;
 
 @RestControllerAdvice 
 public class GlobalExceptionHandler {
+    // xử lí lỗi liên quan tới bán vượt
+    @ExceptionHandler(OptimisticLockingFailureException.class)
+    public ResponseEntity<AuthResponse> handleOptimisticLockingFailure(OptimisticLockingFailureException ex, WebRequest req){
+        AuthResponse response = new AuthResponse();
+        response.setMessage("Sản phẩm vừa có người đặt trước hoặc đã thay đổi. Vui lòng tải lại trang và thử lại!");
+        
+        return new ResponseEntity<>(response, HttpStatus.CONFLICT);
+    } 
+
     // xử lí lỗi liên quan tới UserException
     @ExceptionHandler(UserException.class)
     public ResponseEntity<AuthResponse> userExceptionHandler(UserException e){

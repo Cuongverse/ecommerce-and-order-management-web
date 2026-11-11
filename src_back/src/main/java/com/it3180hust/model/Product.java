@@ -18,7 +18,10 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Index;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 
 @Entity
 @Table(name = "product", indexes = {
@@ -29,6 +32,9 @@ public class Product {
     @Id 
     @GeneratedValue (strategy = GenerationType.AUTO)
     private Long id;
+
+    @Version
+    private Long version;
 
     @Column(name="title")
     private String title;
@@ -51,9 +57,6 @@ public class Product {
     @Column(name="brand")
     private String brand;
 
-    @Column(name="color")
-    private String color;
-
     @Embedded 
     @ElementCollection 
     @Column(name="sizes")
@@ -68,6 +71,9 @@ public class Product {
     @OneToMany(mappedBy="product",cascade=CascadeType.ALL,orphanRemoval = true)
     private List<Review> reviews = new ArrayList<>();
 
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Sku> skus = new ArrayList<>();
+
     @Column(name = "num_ratings")
     private int numRatings;
 
@@ -81,18 +87,17 @@ public class Product {
 
     }
 
-    public Product(Long id, String title, String description, int price, int discountedPrice, double DiscountedPercent,
-            int quantity, String brand, String color, Set<Size> sizes, String imageUrl, List<Rating> ratings,
+    public Product(Long id, String title, String description, int price, int discountedPrice,
+            int quantity, String brand, Set<Size> sizes, String imageUrl, List<Rating> ratings,
             List<Review> reviews, int numRatings, Category category, LocalDateTime createdAt) {
         this.id = id;
         this.title = title;
         this.description = description;
         this.price = price;
         this.discountedPrice = discountedPrice;
-        this.discountedPercent = DiscountedPercent;
+        calculateDiscountPercent();
         this.quantity = quantity;
         this.brand = brand;
-        this.color = color;
         this.sizes = sizes;
         this.imageUrl = imageUrl;
         this.ratings = ratings;
@@ -100,6 +105,24 @@ public class Product {
         this.numRatings = numRatings;
         this.category = category;
         this.createdAt = createdAt;
+    }
+
+    @PrePersist
+    @PreUpdate
+    public void calculateDiscountPercent() {
+        if (this.price > 0 && this.discountedPrice > 0 && this.price > this.discountedPrice) {
+            this.discountedPercent = Math.round(((double) (this.price - this.discountedPrice) / this.price) * 100.0);
+        } else {
+            this.discountedPercent = 0.0;
+        }
+    }
+
+    public Long getVersion() {
+        return version;
+    }
+
+    public void setVersion(Long version) {
+        this.version = version;
     }
 
     public Long getId() {
@@ -132,6 +155,7 @@ public class Product {
 
     public void setPrice(int price) {
         this.price = price;
+        calculateDiscountPercent();
     }
 
     public int getDiscountedPrice() {
@@ -140,6 +164,7 @@ public class Product {
 
     public void setDiscountedPrice(int discountedPrice) {
         this.discountedPrice = discountedPrice;
+        calculateDiscountPercent();
     }
 
     public double getDiscountedPercent() {
@@ -147,7 +172,11 @@ public class Product {
     }
 
     public void setDiscountedPercent(double DiscountedPercent) {
-        this.discountedPercent = DiscountedPercent;
+        if (this.price > 0 && this.discountedPrice > 0) {
+            calculateDiscountPercent();
+        } else {
+            this.discountedPercent = DiscountedPercent;
+        }
     }
 
     public int getQuantity() {
@@ -164,14 +193,6 @@ public class Product {
 
     public void setBrand(String brand) {
         this.brand = brand;
-    }
-
-    public String getColor() {
-        return color;
-    }
-
-    public void setColor(String color) {
-        this.color = color;
     }
 
     public Set<Size> getSizes() {
@@ -228,5 +249,13 @@ public class Product {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public List<Sku> getSkus() {
+        return skus;
+    }
+
+    public void setSkus(List<Sku> skus) {
+        this.skus = skus;
     }
 }

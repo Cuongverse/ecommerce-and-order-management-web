@@ -9,23 +9,25 @@ import com.it3180hust.model.Product;
 import com.it3180hust.model.User;
 import com.it3180hust.repository.CartItemRepository;
 import com.it3180hust.repository.CartRepository;
+import com.it3180hust.repository.UserRepository;
 import com.it3180hust.request.AddItemRequest;
 
 @Service 
 public class CartServiceImplementation implements CartService {
-
     private CartRepository cartRepository;
     private CartItemService cartItemService;
     private ProductService productService;
     private CartItemRepository cartItemRepository;
-
-    
+    private UserRepository userRepository;
 
     public CartServiceImplementation(CartRepository cartRepository, CartItemService cartItemService,
-            ProductService productService) {
+            ProductService productService, CartItemRepository cartItemRepository,
+            UserRepository userRepository) {
         this.cartRepository = cartRepository;
         this.cartItemService = cartItemService;
         this.productService = productService;
+        this.cartItemRepository = cartItemRepository;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -41,6 +43,13 @@ public class CartServiceImplementation implements CartService {
     @Override
     public String addCartItem(Long userId, AddItemRequest req) throws ProductException {
         Cart cart = cartRepository.findByUserId(userId);
+        if (cart == null) {
+            User user = userRepository.findById(userId).orElse(null);
+            if (user != null) {
+                cart = createCart(user);
+            }
+        }
+
         Product product = productService.findProductById(req.getProductId());
 
         CartItem isPresent = cartItemService.isCartItemExist(cart, product, req.getSize(), userId);
@@ -56,6 +65,9 @@ public class CartServiceImplementation implements CartService {
             cartItem.setSize(req.getSize());
 
             CartItem createdCartItem = cartItemService.createCartItem(cartItem);
+            if (cart.getCartItems() == null) {
+                cart.setCartItems(new java.util.HashSet<>());
+            }
             cart.getCartItems().add(createdCartItem);
 
         }
@@ -72,10 +84,22 @@ public class CartServiceImplementation implements CartService {
     @Override
     public Cart findUserCart(Long userId) {
         Cart cart = cartRepository.findByUserId(userId);
+        if (cart == null) {
+            User user = userRepository.findById(userId).orElse(null);
+            if (user != null) {
+                cart = createCart(user);
+            } else {
+                return null;
+            }
+        }
 
         int totalPrice = 0;
         int totalDiscountedPrice = 0;
         int totalItem = 0;
+
+        if (cart.getCartItems() == null) {
+            cart.setCartItems(new java.util.HashSet<>());
+        }
 
         for (CartItem ci : cart.getCartItems()){
             totalPrice += ci.getPrice();

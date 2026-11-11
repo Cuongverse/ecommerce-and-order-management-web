@@ -7,6 +7,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
@@ -25,6 +26,11 @@ public class CartItem {
     private Cart cart;
 
     @ManyToOne 
+    @JoinColumn(name = "sku_id")
+    private Sku sku;
+
+    @ManyToOne
+    @JoinColumn(name = "product_id")
     private Product product;
 
     private String size;
@@ -116,6 +122,13 @@ public class CartItem {
     public void setUserId(Long userId) {
         this.userId = userId;
     }
+    
+    public Sku getSku() {
+        return sku;
+    }
 
+    public void setSku(Sku sku) {
+        this.sku = sku;
+    }
     
 }
