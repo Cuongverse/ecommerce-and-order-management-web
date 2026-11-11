@@ -25,7 +25,6 @@ public class CreateProductRequest {
     private String imageUrl;
 
     private String brand;
-    private String color;
 
     @PositiveOrZero(message = "Price must be greater than or equal to 0!")
     private int price;
@@ -81,12 +80,6 @@ public class CreateProductRequest {
     }
     public void setBrand(String brand) {
         this.brand = brand;
-    }
-    public String getColor() {
-        return color;
-    }
-    public void setColor(String color) {
-        this.color = color;
     }
     public Set<Size> getSize() {
         return size;

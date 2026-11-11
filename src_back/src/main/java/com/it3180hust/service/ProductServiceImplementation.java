@@ -64,13 +64,11 @@ public class ProductServiceImplementation implements ProductService{
         
         Product product = new Product();
         product.setTitle(req.getTitle());
-        product.setColor(req.getColor());
         product.setDescription(req.getDescription());
+        product.setPrice(req.getPrice());
         product.setDiscountedPrice(req.getDiscountedPrice());
-        product.setDiscountedPercent(req.getDiscountedPercent());
         product.setImageUrl(req.getImageUrl());
         product.setBrand(req.getBrand());
-        product.setPrice(req.getPrice());
         product.setSizes(req.getSize());
         product.setQuantity(req.getQuantity());
         product.setCategory(thirdLevel);
@@ -105,19 +103,13 @@ public class ProductServiceImplementation implements ProductService{
     }
 
     @Override
-    public Page<Product> getAllProducts(String category, List<String> colors, List<String> sizes, Integer minPrice,
+    public Page<Product> getAllProducts(String category, List<String> sizes, Integer minPrice,
             Integer maxPrice, Integer minDiscount, String sort, String stock, Integer pageNumber, Integer pageSize) {
         
         PageRequest pageable = PageRequest.of(pageNumber, pageSize);
 
         List<Product> products = productRepository.filterProducts(category, minPrice, maxPrice, minDiscount, sort);
 
-        if (colors != null && !colors.isEmpty()){
-            // lọc màu xem có sản phẩm nào trùng với màu được request không và sau đó tạo ra một list
-            // VD: p1 red, p2 white, p3 yellow; cần lọc red, yellow --> tạo một list gồm các sản phẩm thỏa mãn [p1,p3]
-            products = products.stream().filter(p-> colors.stream().anyMatch(c->c.equalsIgnoreCase(p.getColor())))
-                .collect(Collectors.toList());
-        }
         if (stock != null){
             if (stock.equals("in_stock")){
                 products = products.stream().filter(p -> p.getQuantity() > 0).collect(Collectors.toList());
@@ -139,13 +131,14 @@ public class ProductServiceImplementation implements ProductService{
 
     @Override
     public Product updateProduct(Long productId, Product req) throws ProductException {
-    Product product = findProductById(productId);
+        Product product = findProductById(productId);
 
-    // update only properties which are listed on the json file
-    BeanUtils.copyProperties(req, product, PropertyUtils.getIgnoredPropertyNames(req));
+        // update only properties which are listed on the json file
+        BeanUtils.copyProperties(req, product, PropertyUtils.getIgnoredPropertyNames(req));
+        product.calculateDiscountPercent();
 
-    return productRepository.save(product);
-}
+        return productRepository.save(product);
+    }
 
     @Override 
     public List<Product> findAllProducts() {

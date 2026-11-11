@@ -2,17 +2,23 @@ package com.it3180hust;
 
 import java.lang.reflect.Constructor;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
+import com.it3180hust.model.Cart;
 import com.it3180hust.model.Category;
 import com.it3180hust.model.Product;
 import com.it3180hust.model.Size;
+import com.it3180hust.model.Sku;
 import com.it3180hust.model.User;
+import com.it3180hust.repository.CartRepository;
 import com.it3180hust.repository.CategoryRepostiory;
 import com.it3180hust.repository.ProductRepository;
 import com.it3180hust.repository.UserRepository;
@@ -23,20 +29,30 @@ public class DataInitializer implements CommandLineRunner {
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
     private final CategoryRepostiory categoryRepository;
+    private final CartRepository cartRepository;
     private final PasswordEncoder passwordEncoder;
 
     public DataInitializer(UserRepository userRepository,
                           ProductRepository productRepository,
                           CategoryRepostiory categoryRepository,
+                          CartRepository cartRepository,
                           PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
+        this.cartRepository = cartRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
     @Override
+    @Transactional
     public void run(String... args) {
+        // Ensure all existing users have carts
+        ensureAllUsersHaveCarts();
+
+        // If products exist, ensure their SKUs are properly initialized with stock quantity & linked spu
+        fixOrInitSkusForExistingProducts();
+
         // If some products exists, initialize database, else do nothing.
         if (productRepository.count() > 0) {
             return;
@@ -67,9 +83,7 @@ public class DataInitializer implements CommandLineRunner {
                 pubg,
                 180000,
                 150000,
-                17,
                 "PUBG",
-                "Gold",
                 "https://images.unsplash.com/photo-1542751371-adc38448a05e",
                 200
         );
@@ -80,9 +94,7 @@ public class DataInitializer implements CommandLineRunner {
                 pubg,
                 760000,
                 650000,
-                15,
                 "PUBG",
-                "Gold",
                 "https://images.unsplash.com/photo-1511512578047-dfb367046420",
                 180
         );
@@ -93,9 +105,7 @@ public class DataInitializer implements CommandLineRunner {
                 genshin,
                 180000,
                 160000,
-                11,
                 "Genshin Impact",
-                "Blue",
                 "https://images.unsplash.com/photo-1542751371-adc38448a05e",
                 220
         );
@@ -106,9 +116,7 @@ public class DataInitializer implements CommandLineRunner {
                 genshin,
                 520000,
                 470000,
-                10,
                 "Genshin Impact",
-                "Sky Blue",
                 "https://images.unsplash.com/photo-1511512578047-dfb367046420",
                 170
         );
@@ -119,9 +127,7 @@ public class DataInitializer implements CommandLineRunner {
                 minecraft,
                 390000,
                 349000,
-                10,
                 "Minecraft",
-                "Green",
                 "https://images.unsplash.com/photo-1511512578047-dfb367046420",
                 150
         );
@@ -132,9 +138,7 @@ public class DataInitializer implements CommandLineRunner {
                 minecraft,
                 280000,
                 249000,
-                11,
                 "Minecraft",
-                "Dark Green",
                 "https://images.unsplash.com/photo-1511512578047-dfb367046420",
                 120
         );
@@ -145,9 +149,7 @@ public class DataInitializer implements CommandLineRunner {
                 steam,
                 540000,
                 499000,
-                8,
                 "Steam",
-                "Gray",
                 "https://images.unsplash.com/photo-1511512578047-dfb367046420",
                 200
         );
@@ -158,9 +160,7 @@ public class DataInitializer implements CommandLineRunner {
                 valorant,
                 150000,
                 135000,
-                10,
                 "Valorant",
-                "Red",
                 "https://images.unsplash.com/photo-1542751371-adc38448a05e",
                 180
         );
@@ -171,9 +171,7 @@ public class DataInitializer implements CommandLineRunner {
                 valorant,
                 450000,
                 410000,
-                9,
                 "Valorant",
-                "Crimson",
                 "https://images.unsplash.com/photo-1511512578047-dfb367046420",
                 130
         );
@@ -184,9 +182,7 @@ public class DataInitializer implements CommandLineRunner {
                 roblox,
                 190000,
                 170000,
-                11,
                 "Roblox",
-                "Black",
                 "https://images.unsplash.com/photo-1521572267360-ee0c2909d518",
                 100
         );
@@ -197,9 +193,7 @@ public class DataInitializer implements CommandLineRunner {
                 playstation,
                 680000,
                 620000,
-                9,
                 "PlayStation",
-                "Blue",
                 "https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77",
                 95
         );
@@ -210,9 +204,7 @@ public class DataInitializer implements CommandLineRunner {
                 xbox,
                 420000,
                 390000,
-                7,
                 "Xbox",
-                "Green",
                 "https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77",
                 90
         );
@@ -223,9 +215,7 @@ public class DataInitializer implements CommandLineRunner {
                 nintendo,
                 520000,
                 490000,
-                6,
                 "Nintendo",
-                "Red",
                 "https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77",
                 80
         );
@@ -236,9 +226,7 @@ public class DataInitializer implements CommandLineRunner {
                 freeFire,
                 220000,
                 190000,
-                14,
                 "Free Fire",
-                "Orange",
                 "https://images.unsplash.com/photo-1521572267360-ee0c2909d518",
                 150
         );
@@ -249,9 +237,7 @@ public class DataInitializer implements CommandLineRunner {
                 mobileLegends,
                 120000,
                 99000,
-                18,
                 "Mobile Legends",
-                "Purple",
                 "https://images.unsplash.com/photo-1542291026-7eec264c27ff",
                 180
         );
@@ -277,6 +263,7 @@ public class DataInitializer implements CommandLineRunner {
                                        String rawPassword, String role, String mobile) {
         User existingUser = userRepository.findByEmail(email);
         if (existingUser != null) {
+            ensureUserHasCart(existingUser);
             return existingUser;
         }
 
@@ -288,7 +275,31 @@ public class DataInitializer implements CommandLineRunner {
         user.setRole(role);
         user.setMobile(mobile);
         user.setCreatedAt(LocalDateTime.now());
-        return userRepository.save(user);
+        User savedUser = userRepository.save(user);
+
+        ensureUserHasCart(savedUser);
+        return savedUser;
+    }
+
+    private void ensureUserHasCart(User user) {
+        Cart cart = cartRepository.findByUserId(user.getId());
+        if (cart == null) {
+            Cart newCart = new Cart();
+            newCart.setUser(user);
+            newCart.setCartItems(new HashSet<>());
+            newCart.setTotalPrice(0);
+            newCart.setTotalItem(0);
+            newCart.setTotalDiscountedPrice(0);
+            newCart.setDiscount(0);
+            cartRepository.save(newCart);
+        }
+    }
+
+    private void ensureAllUsersHaveCarts() {
+        List<User> users = userRepository.findAll();
+        for (User user : users) {
+            ensureUserHasCart(user);
+        }
     }
 
     private Product createProductIfNotExists(String title,
@@ -296,9 +307,7 @@ public class DataInitializer implements CommandLineRunner {
                                             Category category,
                                             int price,
                                             int discountedPrice,
-                                            double discountedPercent,
                                             String brand,
-                                            String color,
                                             String imageUrl,
                                             int quantity) {
 
@@ -315,14 +324,13 @@ public class DataInitializer implements CommandLineRunner {
         product.setDescription(description);
         product.setPrice(price);
         product.setDiscountedPrice(discountedPrice);
-        product.setDiscountedPercent(discountedPercent);
         product.setBrand(brand);
-        product.setColor(color);
         product.setImageUrl(imageUrl);
         product.setQuantity(quantity);
         product.setCategory(category);
         product.setCreatedAt(LocalDateTime.now());
         product.setSizes(buildSizes(quantity));
+        product.setSkus(buildSkus(product, quantity));
         product.setNumRatings(0);
 
         return productRepository.save(product);
@@ -349,5 +357,61 @@ public class DataInitializer implements CommandLineRunner {
         } catch (Exception e) {
             throw new RuntimeException("Failed to create sample size: " + name, e);
         }
+    }
+
+    private void fixOrInitSkusForExistingProducts() {
+        List<Product> products = productRepository.findAll();
+        for (Product product : products) {
+            List<Sku> skus = product.getSkus();
+            if (skus == null || skus.isEmpty() || skus.stream().anyMatch(s -> s.getQuantity() <= 0 || s.getProduct() == null)) {
+                if (skus != null) {
+                    skus.clear();
+                } else {
+                    skus = new ArrayList<>();
+                    product.setSkus(skus);
+                }
+                skus.addAll(buildSkus(product, product.getQuantity()));
+                productRepository.save(product);
+            }
+        }
+    }
+
+    private List<Sku> buildSkus(Product product, int totalQuantity){
+        List<Sku> skus = new ArrayList<>();
+        String basePrefix = product.getBrand() != null ? product.getBrand().toUpperCase().replaceAll("\\s+", "") : "ITEM";
+        int tierQuantity = Math.max(1, totalQuantity / 4);
+        int salt = Math.abs((product.getTitle() != null ? product.getTitle() : "DEFAULT").hashCode() % 10000);
+
+        // Tier 1: 20 USD
+        Sku sku1 = new Sku();
+        sku1.setProduct(product);
+        sku1.setSkuCode(basePrefix + "-" + salt + "-20USD");
+        sku1.setTierName("20 USD");
+        sku1.setPrice(500000);
+        sku1.setDiscountedPrice(480000);
+        sku1.setQuantity(tierQuantity);
+        skus.add(sku1);
+
+        // Tier 2: 50 USD
+        Sku sku2 = new Sku();
+        sku2.setProduct(product);
+        sku2.setSkuCode(basePrefix + "-" + salt + "-50USD");
+        sku2.setTierName("50 USD");
+        sku2.setPrice(1250000);
+        sku2.setDiscountedPrice(1200000);
+        sku2.setQuantity(tierQuantity);
+        skus.add(sku2);
+
+        // Tier 3: 100 USD
+        Sku sku3 = new Sku();
+        sku3.setProduct(product);
+        sku3.setSkuCode(basePrefix + "-" + salt + "-100USD");
+        sku3.setTierName("100 USD");
+        sku3.setPrice(2500000);
+        sku3.setDiscountedPrice(2400000);
+        sku3.setQuantity(tierQuantity);
+        skus.add(sku3);
+
+        return skus;
     }
 }

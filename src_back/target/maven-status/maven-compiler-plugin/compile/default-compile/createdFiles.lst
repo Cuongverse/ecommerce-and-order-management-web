@@ -20,6 +20,7 @@ com\it3180hust\controller\AdminProductController.class
 com\it3180hust\repository\UserRepository.class
 com\it3180hust\request\AddItemRequest.class
 com\it3180hust\service\CartServiceImplementation.class
+com\it3180hust\model\Sku.class
 com\it3180hust\response\AuthResponse.class
 com\it3180hust\config\AppConfig.class
 com\it3180hust\service\CartItemService.class
