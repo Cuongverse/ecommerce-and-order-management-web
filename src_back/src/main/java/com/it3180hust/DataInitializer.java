@@ -37,7 +37,8 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        if (productRepository.count() > 0 || userRepository.count() > 0) {
+        // If some products exists, initialize database, else do nothing.
+        if (productRepository.count() > 0) {
             return;
         }
 
@@ -328,13 +329,13 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private Set<Size> buildSizes(int totalQuantity) {
-        Set<Size> sizes = new HashSet<>();
+        Set<Size> tiers = new HashSet<>();
 
-        sizes.add(createSize("S", Math.max(1, totalQuantity / 3)));
-        sizes.add(createSize("M", Math.max(1, totalQuantity / 3)));
-        sizes.add(createSize("L", Math.max(1, totalQuantity / 3)));
+        tiers.add(createSize("20 USD", Math.max(1, totalQuantity / 4)));
+        tiers.add(createSize("50 USD", Math.max(1, totalQuantity / 4)));
+        tiers.add(createSize("100 USD", Math.max(1, totalQuantity / 4)));
 
-        return sizes;
+        return tiers;
     }
 
     private Size createSize(String name, int quantity) {

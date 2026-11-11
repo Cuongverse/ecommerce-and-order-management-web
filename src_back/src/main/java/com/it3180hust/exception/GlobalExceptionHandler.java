@@ -1,6 +1,5 @@
 package com.it3180hust.exception;
 
-import org.apache.catalina.connector.Response;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

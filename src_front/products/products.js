@@ -7,7 +7,10 @@
  */
 const $ = sel => document.querySelector(sel);
 
-const money = n => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n);
+const money = n => {
+    const num = Math.round(Number(n ?? 0));
+    return new Intl.NumberFormat('vi-VN').format(num) + '₫';
+};
 
 const esc = s => String(s).replace(/[&<>"']/g, c => (
     { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
@@ -21,12 +24,12 @@ const titleCase = s => s.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase(
    3. no img field at all -> product_images/<id>.png
    4. if that file doesn't exist, a gradient placeholder with initials is drawn  */
 const IMG_DIR = '../product_images/';
-const USD_RATE = 24000;
 
-function toUsdValue(rawValue) {
+function toVndValue(rawValue) {
     const parsed = Number(String(rawValue ?? '').replace(/[^0-9.-]+/g, ''));
-    if (!Number.isFinite(parsed)) return null;
-    return parsed > 1000 ? parsed / USD_RATE : parsed;
+    if (!Number.isFinite(parsed)) return 0;
+    // If it's a small dollar value (< 1000), convert to VND
+    return parsed > 1000 ? parsed : parsed * 25000;
 }
 
 function normalizeImageSource(src) {
@@ -59,7 +62,7 @@ function preferredLocalImageForName(name) {
     return match ? `${IMG_DIR}${match.file}` : null;
 }
 
-// maintain Tuan's branch for because of better integration with backend
+// maintain Tuan's branch because of better integration with backend
 const imageFor = p => {
     const src = normalizeImageSource(p.img || p.imageUrl || p.image_url || `${p.id}.png`);
     return src || `${IMG_DIR}testing.png`;
@@ -110,18 +113,49 @@ function toast(msg) {
 /* =========================================================
    BACKEND PRODUCT -> the shape this page draws
    ========================================================= */
+const USD_RATE = 24000;
+
+function parseTierPrice(tierName, fallbackPrice) {
+    const raw = String(tierName || '').trim();
+    if (/\b(VND|VNĐ|Đ)\b/i.test(raw)) {
+        const cleaned = raw.replace(/[^\d]/g, '');
+        return cleaned ? parseInt(cleaned, 10) : fallbackPrice;
+    }
+    const cleanForNum = raw.replace(/[,\.]/g, '');
+    const match = cleanForNum.match(/\d+/);
+    if (!match) return fallbackPrice;
+    const num = parseInt(match[0], 10);
+    if (raw.includes('$') || /USD/i.test(raw) || num < 1000) {
+        return Math.round(num * USD_RATE);
+    }
+    return num;
+}
+
 function toProduct(p) {
-    const price = p.discountedPrice > 0 ? p.discountedPrice : p.price;
-    const old = p.price > price ? p.price : undefined;          // crossed-out original price
+    const rawPrice = p.discountedPrice > 0 ? p.discountedPrice : p.price;
+    const basePrice = toVndValue(rawPrice);
+    const oldBase = p.price > rawPrice ? toVndValue(p.price) : undefined;
     const ratings = p.ratings || [];
     const average = ratings.length ? ratings.reduce((s, r) => s + r.rating, 0) / ratings.length : 0;
     const feedback = buildFeedback(p.ratings, p.reviews);
 
     // every size becomes one option you can pick; no sizes = a single option
     const sizes = Array.from(p.sizes || []);
-    const variants = sizes.length
-        ? sizes.map(s => ({ label: `${p.title} - ${s.name}`, size: s.name, price, old, stock: s.quantity > 0 }))
-        : [{ label: p.title, price, old, stock: p.quantity > 0 }];
+    let variants = sizes.length
+        ? sizes.map(s => {
+            const tierPrice = parseTierPrice(s.name, basePrice);
+            return { 
+                label: `${p.title} (${s.name})`, 
+                size: s.name, 
+                price: tierPrice, 
+                old: oldBase ? Math.round(tierPrice * (p.price / (p.discountedPrice || p.price))) : undefined, 
+                stock: s.quantity > 0 
+            };
+        })
+        : [{ label: p.title, price: basePrice, old: oldBase, stock: p.quantity > 0 }];
+
+    // Sort variants from cheapest to most expensive so the lowest price is selected by default
+    variants.sort((a, b) => a.price - b.price);
 
     return {
         id: String(p.id),

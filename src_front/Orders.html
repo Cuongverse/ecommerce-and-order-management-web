@@ -96,7 +96,10 @@
 <script src="api.js"></script>
 <script>
 const $ = sel => document.querySelector(sel);
-const money = n => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n);
+const money = n => {
+    const num = Math.round(Number(n ?? 0));
+    return new Intl.NumberFormat('vi-VN').format(num) + '₫';
+};
 const esc = s => String(s).replace(/[&<>"']/g, c => (
     { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
 ));

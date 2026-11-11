@@ -91,26 +91,21 @@ function productUrl(item) {
 const productGrid = document.querySelector('.product-grid');
 
 const fallbackProducts = [
-    { name: "VND Steam Wallet Việt Nam Gift Card", price: 420, rating: 4.5, img: "product_images/testing.png" },
-    { name: "USD Steam Wallet Card Order",         price: 67,  rating: 4.5, img: "product_images/testing.png" },
-    { name: "Euro Steam Wallet Gift Card",         price: 99,  rating: 1.0, img: "product_images/testing.png" },
-    { name: "PUBG PC Pass Steam",                  price: 30,  rating: 4.5, img: "product_images/testing.png" },
-    { name: "Random Steam Game Code",              price: 9,   rating: 2.0, img: "product_images/testing.png" },
-    { name: "Where Winds Meet Top-up",             price: 25,  rating: 4.5, img: "product_images/testing.png" },
-    { name: "Game Top-up Card",                    price: 67,  rating: 3.35, img: "product_images/testing.png" },
-    { name: "Game Top-up Card",                    price: 67,  rating: 3.35, img: "product_images/testing.png" },
-    { name: "Game Top-up Card",                    price: 67,  rating: 3.35, img: "product_images/testing.png" },
-    { name: "Game Top-up Card",                    price: 67,  rating: 3.35, img: "product_images/testing.png" }
+    { name: "VND Steam Wallet Việt Nam Gift Card", price: 420000, rating: 4.5, img: "product_images/testing.png" },
+    { name: "USD Steam Wallet Card Order",         price: 540000, rating: 4.5, img: "product_images/testing.png" },
+    { name: "Euro Steam Wallet Gift Card",         price: 650000, rating: 1.0, img: "product_images/testing.png" },
+    { name: "PUBG PC Pass Steam",                  price: 180000, rating: 4.5, img: "product_images/testing.png" },
+    { name: "Random Steam Game Code",              price: 80000,  rating: 2.0, img: "product_images/testing.png" },
+    { name: "Where Winds Meet Top-up",             price: 250000, rating: 4.5, img: "product_images/testing.png" },
+    { name: "Game Top-up Card",                    price: 200000, rating: 3.35, img: "product_images/testing.png" },
+    { name: "Game Top-up Card",                    price: 200000, rating: 3.35, img: "product_images/testing.png" },
+    { name: "Game Top-up Card",                    price: 200000, rating: 3.35, img: "product_images/testing.png" },
+    { name: "Game Top-up Card",                    price: 200000, rating: 3.35, img: "product_images/testing.png" }
 ];
-const USD_RATE = 24000;
 
-function toUsd(value) {
-    const numeric = Number(value ?? 0);
-    return Number.isFinite(numeric) ? numeric / USD_RATE : 0;
-}
-
-function formatUsd(value, digits = 2) {
-    return `$${Number(value ?? 0).toFixed(digits)}`;
+function formatVnd(value) {
+    const num = Math.round(Number(value ?? 0));
+    return new Intl.NumberFormat('vi-VN').format(num) + '₫';
 }
 
 function productAsset(fileName) {
@@ -121,7 +116,7 @@ let products = [...fallbackProducts].map((item, idx) => ({
     ...item,
     id: String(idx + 1),
     priceValue: Number(item.price ?? 0),
-    price: formatUsd(Number(item.price ?? 0)),
+    price: formatVnd(Number(item.price ?? 0)),
     img: item.img || "product_images/testing.png"
 }));
 
@@ -163,20 +158,87 @@ function resolveServiceImage(groupTitle) {
     return productAsset('RankBoost.webp');
 }
 
+const USD_RATE = 24000;
+
+function parseTierPrice(tierName, fallbackPrice) {
+    const raw = String(tierName || '').trim();
+    if (/\b(VND|VNĐ|Đ)\b/i.test(raw)) {
+        const cleaned = raw.replace(/[^\d]/g, '');
+        return cleaned ? parseInt(cleaned, 10) : fallbackPrice;
+    }
+    const cleanForNum = raw.replace(/[,\.]/g, '');
+    const match = cleanForNum.match(/\d+/);
+    if (!match) return fallbackPrice;
+    const num = parseInt(match[0], 10);
+    if (raw.includes('$') || /USD/i.test(raw) || num < 1000) {
+        return Math.round(num * USD_RATE);
+    }
+    return num;
+}
+
 function mapApiProduct(product) {
-    const normalizedPrice = Number(product.discountedPrice ?? product.price ?? 0);
-    const priceUsd = toUsd(normalizedPrice);
+    const rawPrice = Number(product.discountedPrice ?? product.price ?? 0);
+    const fallbackVnd = rawPrice > 1000 ? rawPrice : rawPrice * USD_RATE;
     const productName = product.title || product.name || 'Gift Card';
     const chosenImage = resolveProductImage(productName);
+
+    // Calculate actual tier prices from sizes
+    const sizes = Array.from(product.sizes || []);
+    let minTierPrice = fallbackVnd;
+    let maxTierPrice = fallbackVnd;
+
+    if (sizes.length > 0) {
+        const tierPrices = sizes.map(s => parseTierPrice(s.name, fallbackVnd));
+        minTierPrice = Math.min(...tierPrices);
+        maxTierPrice = Math.max(...tierPrices);
+    }
 
     return {
         id: String(product.id ?? product.title ?? Math.random().toString(16).slice(2)),
         name: productName,
-        priceValue: priceUsd > 0 ? priceUsd : 10,
-        price: formatUsd(priceUsd > 0 ? priceUsd : 10),
+        brand: product.brand || productName.split(' ')[0],
+        priceValue: minTierPrice,
+        minPrice: minTierPrice,
+        maxPrice: maxTierPrice,
+        price: formatVnd(minTierPrice),
         rating: Number(product.numRatings ?? product.rating ?? 4.5),
         img: chosenImage
     };
+}
+
+function groupProductsByBrand(productList) {
+    const grouped = {};
+
+    productList.forEach(p => {
+        // Group by brand or main title eg. "Steam Wallet", "Genshin Impact"
+        const groupKey = p.brand || p.name.split(' ')[0] || 'Gift Card';
+        const pMin = p.minPrice ?? p.priceValue;
+        const pMax = p.maxPrice ?? p.priceValue;
+
+        if (!grouped[groupKey]) {
+            grouped[groupKey] = {
+                id: p.id,
+                name: `${groupKey} Gift Card`,
+                img: p.img,
+                rating: p.rating,
+                minPrice: pMin,
+                maxPrice: pMax,
+                items: [p]
+            };
+        } 
+        else {
+            grouped[groupKey].minPrice = Math.min(grouped[groupKey].minPrice, pMin);
+            grouped[groupKey].maxPrice = Math.max(grouped[groupKey].maxPrice, pMax);
+            grouped[groupKey].items.push(p);
+        }
+    });
+
+    return Object.values(grouped).map(g => ({
+        ...g,
+        priceDisplay: g.minPrice === g.maxPrice ? formatVnd(g.minPrice) 
+                                                : `${formatVnd(g.minPrice)} ~ ${formatVnd(g.maxPrice)}`,
+        priceValue: g.minPrice
+    }));
 }
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => (
@@ -190,7 +252,7 @@ function renderProducts(list) {
             <img src="${esc(p.img)}" alt="${esc(p.name)}" onerror="this.onerror=null;this.src='product_images/testing.png'">
             <div class="product-info">
                 <h4>${esc(p.name)}</h4>
-                <p class="price">${money(p.price)}</p>
+                <p class="price">${esc(p.priceDisplay || p.price)}</p>
                 <div class="stars" style="--rating: ${p.rating}">★★★★★</div>
             </div>
         </a>
@@ -207,9 +269,9 @@ function buildLimitedOffers() {
     const picks = shuffle(featured).slice(0, 3);
 
     dealGrid.innerHTML = picks.map((item, idx) => {
-        const base = Number(item.priceValue ?? item.price ?? 10);
+        const base = Number(item.priceValue ?? item.price ?? 250000);
         const discount = 20 + (idx * 10) + (Math.random() > 0.5 ? 5 : 0);
-        const finalPrice = base * (1 - discount / 100);
+        const finalPrice = Math.round(base * (1 - discount / 100));
         const oldPrice = base;
         return `
             <a href="${productUrl(item)}" class="deal-card">
@@ -217,7 +279,7 @@ function buildLimitedOffers() {
                 <img src="${item.img}" alt="${item.name}">
                 <div class="deal-info">
                     <h4>${item.name}</h4>
-                    <p><span class="old">${formatUsd(oldPrice)}</span> <span class="new">${formatUsd(finalPrice)}</span></p>
+                    <p><span class="old">${formatVnd(oldPrice)}</span> <span class="new">${formatVnd(finalPrice)}</span></p>
                 </div>
             </a>
         `;
@@ -225,35 +287,35 @@ function buildLimitedOffers() {
 }
 
 const voucherItems = [
-    { name: 'AK-47 Redline skin', category: 'Skin', oldPrice: 18.99, price: 12.99 },
-    { name: 'M416 Glacier skin', category: 'Skin', oldPrice: 16.5, price: 11.25 },
-    { name: 'AWM Dragon skin', category: 'Weapon', oldPrice: 21.0, price: 14.0 },
-    { name: 'Glock Phantom skin', category: 'Weapon', oldPrice: 15.0, price: 10.25 },
-    { name: 'M4A1-S Ghost skin', category: 'Skin', oldPrice: 14.99, price: 9.99 },
-    { name: 'Valorant Prime bundle', category: 'Bundle', oldPrice: 19.0, price: 12.5 },
-    { name: 'PUBG UMP skin pack', category: 'Skin', oldPrice: 17.5, price: 11.5 },
-    { name: 'Free Fire AK47 skin', category: 'Skin', oldPrice: 13.25, price: 8.99 },
-    { name: 'Genshin weapon upgrade pass', category: 'Weapon', oldPrice: 24.0, price: 16.0 },
-    { name: 'Minecraft rare bundle', category: 'Bundle', oldPrice: 12.5, price: 8.75 },
-    { name: 'CS2 knife skin', category: 'Weapon', oldPrice: 29.0, price: 19.0 },
-    { name: 'League skin discount pack', category: 'Skin', oldPrice: 20.0, price: 13.5 }
+    { name: 'AK-47 Redline skin', category: 'Skin', oldPrice: 450000, price: 320000 },
+    { name: 'M416 Glacier skin', category: 'Skin', oldPrice: 390000, price: 280000 },
+    { name: 'AWM Dragon skin', category: 'Weapon', oldPrice: 500000, price: 350000 },
+    { name: 'Glock Phantom skin', category: 'Weapon', oldPrice: 360000, price: 250000 },
+    { name: 'M4A1-S Ghost skin', category: 'Skin', oldPrice: 350000, price: 240000 },
+    { name: 'Valorant Prime bundle', category: 'Bundle', oldPrice: 460000, price: 310000 },
+    { name: 'PUBG UMP skin pack', category: 'Skin', oldPrice: 420000, price: 290000 },
+    { name: 'Free Fire AK47 skin', category: 'Skin', oldPrice: 320000, price: 220000 },
+    { name: 'Genshin weapon upgrade pass', category: 'Weapon', oldPrice: 580000, price: 390000 },
+    { name: 'Minecraft rare bundle', category: 'Bundle', oldPrice: 300000, price: 210000 },
+    { name: 'CS2 knife skin', category: 'Weapon', oldPrice: 700000, price: 470000 },
+    { name: 'League skin discount pack', category: 'Skin', oldPrice: 480000, price: 330000 }
 ];
 
 const serviceItems = [
-    { name: 'Rank boost (Gold to Diamond)', type: 'Rank boost', oldPrice: 24.0, price: 16.99 },
-    { name: 'Valorant win boost', type: 'Rank boost', oldPrice: 19.0, price: 13.5 },
-    { name: 'PUBG squad placement', type: 'Mission', oldPrice: 14.0, price: 9.5 },
-    { name: 'Genshin artifact farming', type: 'Farming', oldPrice: 18.0, price: 12.25 },
-    { name: 'LOL ranked carry', type: 'Rank boost', oldPrice: 26.0, price: 17.5 },
-    { name: 'Map clearing service', type: 'Quest', oldPrice: 16.0, price: 11.0 },
-    { name: 'Daily mission completion', type: 'Mission', oldPrice: 12.0, price: 8.0 },
-    { name: 'Dungeon clear boost', type: 'Quest', oldPrice: 15.5, price: 10.49 },
-    { name: 'Arena win boost', type: 'Rank boost', oldPrice: 21.0, price: 14.25 },
-    { name: 'Weapon upgrade setup', type: 'Service', oldPrice: 11.0, price: 7.25 },
-    { name: 'Character leveling service', type: 'Leveling', oldPrice: 22.0, price: 15.0 },
-    { name: 'Story mode completion', type: 'Mission', oldPrice: 13.25, price: 9.0 },
-    { name: 'Boss farming support', type: 'Farming', oldPrice: 17.5, price: 11.75 },
-    { name: 'Raid carry service', type: 'Quest', oldPrice: 28.5, price: 19.5 }
+    { name: 'Rank boost (Gold to Diamond)', type: 'Rank boost', oldPrice: 580000, price: 420000 },
+    { name: 'Valorant win boost', type: 'Rank boost', oldPrice: 460000, price: 330000 },
+    { name: 'PUBG squad placement', type: 'Mission', oldPrice: 340000, price: 230000 },
+    { name: 'Genshin artifact farming', type: 'Farming', oldPrice: 440000, price: 300000 },
+    { name: 'LOL ranked carry', type: 'Rank boost', oldPrice: 630000, price: 430000 },
+    { name: 'Map clearing service', type: 'Quest', oldPrice: 390000, price: 270000 },
+    { name: 'Daily mission completion', type: 'Mission', oldPrice: 290000, price: 195000 },
+    { name: 'Dungeon clear boost', type: 'Quest', oldPrice: 375000, price: 255000 },
+    { name: 'Arena win boost', type: 'Rank boost', oldPrice: 510000, price: 350000 },
+    { name: 'Weapon upgrade setup', type: 'Service', oldPrice: 270000, price: 180000 },
+    { name: 'Character leveling service', type: 'Leveling', oldPrice: 530000, price: 370000 },
+    { name: 'Story mode completion', type: 'Mission', oldPrice: 320000, price: 220000 },
+    { name: 'Boss farming support', type: 'Farming', oldPrice: 425000, price: 285000 },
+    { name: 'Raid carry service', type: 'Quest', oldPrice: 690000, price: 480000 }
 ];
 
 function renderVoucherGrid() {
@@ -282,7 +344,7 @@ function renderVoucherGrid() {
                         <img src="${image}" alt="${item.name}">
                         <div class="info">
                             <h4>${item.name}</h4>
-                            <p class="price">${formatUsd(item.price)} - ${formatUsd(item.oldPrice)}</p>
+                            <p class="price">${formatVnd(item.price)} - ${formatVnd(item.oldPrice)}</p>
                             <p class="stars">★★★★★</p>
                         </div>
                     </div>
@@ -312,11 +374,11 @@ function renderServices() {
                     <a href="" class="svc-more">View more</a>
                 </div>
                 ${g.items.map(i => `
-                    <a href="${productUrl({ id: slug(i.name), name: i.name, img: image, price: formatUsd(i.price) })}" class="svc-row">
+                    <a href="${productUrl({ id: slug(i.name), name: i.name, img: image, price: formatVnd(i.price) })}" class="svc-row">
                         <img src="${image}" alt="${i.name}">
                         <div class="svc-info">
                             <h4>${i.name}</h4>
-                            <p class="svc-price">${formatUsd(i.price)}</p>
+                            <p class="svc-price">${formatVnd(i.price)}</p>
                             <div class="stars" style="--rating: 4.5">★★★★★</div>
                         </div>
                     </a>
@@ -354,8 +416,8 @@ setInterval(tickCountdown, 1000);
 /* ---------- filters + search ---------- */
 const filters = {
     suggested: list => list,
-    under:     list => list.filter(p => (p.priceValue ?? parseFloat(String(p.price).replace(/[^0-9.-]+/g, ''))) < 50),
-    above:     list => list.filter(p => (p.priceValue ?? parseFloat(String(p.price).replace(/[^0-9.-]+/g, ''))) >= 50),
+    under:     list => list.filter(p => (p.priceValue ?? parseFloat(String(p.price).replace(/[^0-9.-]+/g, ''))) < 500000),
+    above:     list => list.filter(p => (p.priceValue ?? parseFloat(String(p.price).replace(/[^0-9.-]+/g, ''))) >= 500000),
     top:       list => [...list].sort((a, b) => Number(b.rating ?? 0) - Number(a.rating ?? 0)),
     low:       list => [...list].sort((a, b) => (a.priceValue ?? parseFloat(String(a.price).replace(/[^0-9.-]+/g, ''))) - (b.priceValue ?? parseFloat(String(b.price).replace(/[^0-9.-]+/g, '')))),
 };
@@ -407,7 +469,8 @@ async function loadProducts() {
         const items = Array.isArray(payload) ? payload : (payload.content || []);
 
         if (Array.isArray(items) && items.length > 0) {
-            products = items.map(mapApiProduct);
+            const rawMapped = items.map(mapApiProduct);
+            products = groupProductsByBrand(rawMapped);
             applyFilters();
             refreshStorefrontSections();
             return;
@@ -416,13 +479,14 @@ async function loadProducts() {
         console.warn('Falling back to local sample products:', error);
     }
 
-    products = [...fallbackProducts].map((item, idx) => ({
+    const fallbackMapped = [...fallbackProducts].map((item, idx) => ({
         ...item,
         id: String(idx + 1),
         priceValue: Number(item.price ?? 0),
-        price: formatUsd(Number(item.price ?? 0)),
+        price: formatVnd(Number(item.price ?? 0)),
         img: resolveProductImage(item.name)
     }));
+    products = groupProductsByBrand(fallbackMapped);
     applyFilters();
     refreshStorefrontSections();
 }
@@ -450,24 +514,24 @@ document.querySelectorAll('.deal-card, .voucher-item').forEach(card => {
 (function () {
     const groups = [
         { title: "Streaming", items: [
-            { id: "netflix", name: "Netflix Gift Card",     price: "$15 ~ $100", rating: 4.5, img: "product_images/testing.png" },
-            { id: "spotify", name: "Spotify Premium Card",  price: "$10 ~ $60",  rating: 4.5, img: "product_images/testing.png" },
-            { name: "Disney+ Gift Card",     price: "$25 ~ $100", rating: 4,   img: "product_images/testing.png" },
+            { id: "netflix", name: "Netflix Gift Card",     price: "150.000₫ ~ 500.000₫", rating: 4.5, img: "product_images/testing.png" },
+            { id: "spotify", name: "Spotify Premium Card",  price: "100.000₫ ~ 350.000₫",  rating: 4.5, img: "product_images/testing.png" },
+            { name: "Disney+ Gift Card",     price: "250.000₫ ~ 600.000₫", rating: 4,   img: "product_images/testing.png" },
         ]},
         { title: "Shopping", items: [
-            { id: "amazon", name: "Amazon Gift Card",      price: "$10 ~ $500", rating: 5,   img: "product_images/testing.png" },
-            { name: "Google Play Gift Card", price: "$5 ~ $100",  rating: 4.5, img: "product_images/testing.png" },
-            { name: "Apple Gift Card",       price: "$10 ~ $200", rating: 4.5, img: "product_images/testing.png" },
+            { id: "amazon", name: "Amazon Gift Card",      price: "100.000₫ ~ 2.000.000₫", rating: 5,   img: "product_images/testing.png" },
+            { name: "Google Play Gift Card", price: "50.000₫ ~ 1.000.000₫",  rating: 4.5, img: "product_images/testing.png" },
+            { name: "Apple Gift Card",       price: "100.000₫ ~ 1.500.000₫", rating: 4.5, img: "product_images/testing.png" },
         ]},
         { title: "Chat & Social", items: [
-            { name: "Discord Nitro",         price: "$10 ~ $100", rating: 4.5, img: "product_images/testing.png" },
-            { name: "Telegram Premium",      price: "$5 ~ $50",   rating: 4,   img: "product_images/testing.png" },
-            { name: "Twitch Gift Card",      price: "$10 ~ $100", rating: 4,   img: "product_images/testing.png" },
+            { name: "Discord Nitro",         price: "100.000₫ ~ 500.000₫", rating: 4.5, img: "product_images/testing.png" },
+            { name: "Telegram Premium",      price: "50.000₫ ~ 300.000₫",   rating: 4,   img: "product_images/testing.png" },
+            { name: "Twitch Gift Card",      price: "100.000₫ ~ 500.000₫", rating: 4,   img: "product_images/testing.png" },
         ]},
         { title: "Software", items: [
-            { name: "Microsoft 365",         price: "$20 ~ $100", rating: 4.5, img: "product_images/testing.png" },
-            { name: "Adobe Creative Cloud",  price: "$30 ~ $300", rating: 4,   img: "product_images/testing.png" },
-            { name: "NordVPN Subscription",  price: "$15 ~ $120", rating: 4.5, img: "product_images/testing.png" },
+            { name: "Microsoft 365",         price: "200.000₫ ~ 800.000₫", rating: 4.5, img: "product_images/testing.png" },
+            { name: "Adobe Creative Cloud",  price: "300.000₫ ~ 1.500.000₫", rating: 4,   img: "product_images/testing.png" },
+            { name: "NordVPN Subscription",  price: "150.000₫ ~ 600.000₫", rating: 4.5, img: "product_images/testing.png" },
         ]},
     ];
 
