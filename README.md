@@ -81,21 +81,48 @@ Hệ thống được thiết kế theo mô hình kiểm soát truy cập dựa 
 
 ---
 
-## 6. HƯỚNG DẪN CÀI ĐẶT & CHẠY THỬ (GETTING STARTED)
+## 6. HƯỚNG DẪN CÀI ĐẶT & CHẠY THỬ (QUICK START)
 
-### 6.1. Yêu cầu môi trường
-* Node.js $\ge$ 18.x hoặc Java JDK $\ge$ 17.
-* Docker & Docker Compose.
-* Git.
-
-### 6.2. Các bước khởi chạy cục bộ (Local Development)
-
-1. **Clone mã nguồn dự án:**
-   ```bash
-   git clone https://github.com/Cuongverse/ecommerce-and-order-management-web.git
-   ```
-2. **Chuyển tới thư mục dự án và chạy:**
-  ```bash
-  cd ecommerce
-  (sẽ còn cập nhật thêm)
+### 6.1. Yêu cầu & Chuẩn bị CSDL
+* **Môi trường:** Java JDK 17 LTS, MySQL 8.0, Git.
+* **Tạo Database trong MySQL:**
+  ```sql
+  CREATE DATABASE IF NOT EXISTS testdb;
   ```
+  *(Kiểm tra tài khoản/mật khẩu MySQL tại [`src_back/src/main/resources/application.properties`](src_back/src/main/resources/application.properties))*.
+
+---
+
+### 6.2. Khởi chạy hệ thống
+
+#### Cách 1: Khởi chạy tự động (Windows - Khuyên dùng)
+Nhấp đúp vào file script tiện ích:
+```cmd
+run-app.bat
+```
+
+#### Cách 2: Khởi chạy thủ công qua Terminal
+1. **Chạy Backend:**
+   ```powershell
+   cd src_back
+   .\mvnw.cmd spring-boot:run
+   # Backend API chạy tại: http://localhost:5432
+   ```
+2. **Chạy Frontend:**
+   * Mở bằng extension **Live Server** trong VS Code (nhấp chuột phải [`src_front/site.html`](src_front/site.html) $\rightarrow$ *Open with Live Server*).
+   * Hoặc dùng Python: `cd src_front && python -m http.server 8080` $\rightarrow$ truy cập `http://localhost:8080/site.html`.
+
+---
+
+### 6.3. Tài khoản thử nghiệm (Default Accounts)
+
+| Vai trò | Email đăng nhập | Mật khẩu | Quyền hạn & Chức năng |
+| :--- | :--- | :--- | :--- |
+| **Quản trị viên (Admin)** | `admin@giftcard.com` | `admin123` | Quản lý sản phẩm, tồn kho và duyệt đơn hàng (`admin.html`). |
+| **Khách hàng (Customer)** | `user@giftcard.com` | `user123` | Mua thẻ game, giỏ hàng (`cart.html`), tra cứu đơn (`orders.html`). |
+
+---
+
+### 6.4. Lưu ý khi sử dụng
+* **Cổng dịch vụ:** Backend chạy cổng **`5432`**, Frontend chạy cổng **`5500`** (Live Server) hoặc **`8080`**.
+* **Làm mới giao diện:** Nếu trang bị trắng hoặc không nhận script mới, nhấn **`Ctrl + F5`** trên trình duyệt để xóa cache.
