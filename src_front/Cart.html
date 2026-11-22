@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cart | GiftCard</title>
     <link rel="stylesheet" href="site.css">
-    <link rel="stylesheet" href="cart.css">
+    <link rel="stylesheet" href="Cart.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
@@ -17,15 +17,15 @@
     <div class="container">
         <div class="navbar">
             <div class="logo">
-                <a href="site.html"><img src="header_images/logo.png" width="250px" alt="GiftCards"></a>
+                <a href="site.html"><img src="header_images/logo.jpeg" width="250px" alt="GiftCards"></a>
             </div>
             <nav>
                 <ul>
                     <li><a href="site.html">Home</a></li>
                     <li><a href="site.html#featured">Gift Cards</a></li>
                     <li><a href="site.html#vouchers">Vouchers</a></li>
-                    <li><a href="orders.html">My Orders</a></li>
-                    <li><a href="admin.html">Admin</a></li>
+                    <li><a href="Orders.html">My Orders</a></li>
+                    <li><a href="Admin.html">Admin</a></li>
                 </ul>
             </nav>
 
@@ -81,7 +81,7 @@
             <div class="ct-row"><span>Original price</span><span id="ct-orig"></span></div>
             <div class="ct-row"><span>Discount</span><span id="ct-save"></span></div>
             <div class="ct-row ct-total"><span>Total</span><span id="ct-total"></span></div>
-            <a href="checkout.html" class="ct-btn primary">Checkout</a>
+            <a href="Checkout.html" class="ct-btn primary">Checkout</a>
         </aside>
     </div>
 </main>
@@ -94,13 +94,11 @@
     </div>
 </footer>
 
+<script src="config.js"></script>
 <script src="api.js"></script>
 <script>
 const $ = sel => document.querySelector(sel);
-const money = n => {
-    const num = Math.round(Number(n ?? 0));
-    return new Intl.NumberFormat('vi-VN').format(num) + '₫';
-};
+const money = n => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n);
 const esc = s => String(s).replace(/[&<>"']/g, c => (
     { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
 ));
@@ -120,6 +118,16 @@ const MAX_QTY = 10;
 let items = [];
 let busy = false;
 
+function maxQuantityFor(item) {
+    const product = item.product || {};
+    const totalStock = Number(product.quantity);
+    const sizes = Array.isArray(product.sizes) ? product.sizes : [];
+    const selectedSize = sizes.find(size => String(size.name || '') === String(item.size || ''));
+    const optionStock = selectedSize ? Number(selectedSize.quantity) : totalStock;
+    const knownStock = [totalStock, optionStock].filter(Number.isFinite);
+    return knownStock.length ? Math.max(0, Math.min(MAX_QTY, ...knownStock)) : MAX_QTY;
+}
+
 function showState(html) {
     $('#ct-state').innerHTML = html;
     $('#ct-state').hidden = false;
@@ -129,7 +137,7 @@ function showState(html) {
 async function loadCart() {
     if (!Auth.isLoggedIn()) {
         showState(`<p>Log in to see your cart.</p>
-                   <a class="ct-btn primary" href="auth.html?next=${encodeURIComponent(location.href)}">Log in</a>`);
+                   <a class="ct-btn primary" href="Auth.html?next=${encodeURIComponent(location.href)}">Log in</a>`);
         return;
     }
     try {
@@ -170,7 +178,7 @@ function render() {
             <div class="ct-stepper">
                 <button type="button" data-act="minus" data-id="${i.id}" aria-label="Decrease" ${i.quantity <= 1 ? 'disabled' : ''}>−</button>
                 <span>${i.quantity}</span>
-                <button type="button" data-act="plus" data-id="${i.id}" aria-label="Increase" ${i.quantity >= MAX_QTY ? 'disabled' : ''}>+</button>
+                <button type="button" data-act="plus" data-id="${i.id}" aria-label="Increase" ${i.quantity >= maxQuantityFor(i) ? 'disabled' : ''}>+</button>
             </div>
             <div class="ct-line">${money(lineTotal(i))}</div>
             <button type="button" class="ct-del" data-act="del" data-id="${i.id}" aria-label="Remove">🗑</button>
@@ -199,7 +207,12 @@ $('#ct-list').addEventListener('click', async e => {
             await apiFetch('/api/cart_items/delete/' + item.id, { method: 'DELETE' });
         } else {
             const quantity = item.quantity + (btn.dataset.act === 'plus' ? 1 : -1);
-            // the backend overwrites size with whatever we send, so send the current one back
+            if (quantity < 1 || quantity > maxQuantityFor(item)) {
+                $('#ct-msg').textContent = 'The requested quantity exceeds the available stock.';
+                busy = false;
+                return;
+            }
+            // The backend overwrites size with whatever we send, so preserve it.
             await apiFetch('/api/cart_items/update/' + item.id, { method: 'PUT', body: { quantity, size: item.size } });
         }
         await loadCart();
