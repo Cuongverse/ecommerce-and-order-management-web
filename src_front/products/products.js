@@ -1,75 +1,25 @@
-/* 
-   products.js - builds the product page.
-
-   Where the product comes from:
-   - products.html?id=12          -> backend  GET /api/products/id/12
-   - products.html?id=netflix     -> sample data in ../data.js (the static cards on the home page)
+/*
+ * products.js - renders a product detail page.
+ * Numeric IDs are loaded from the real backend. Non-numeric IDs are
+ * intentional static/demo cards from data.js.
  */
-const $ = sel => document.querySelector(sel);
+const $ = selector => document.querySelector(selector);
+const money = value => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(value) || 0);
+const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+}[char]));
 
-const money = n => {
-    const num = Math.round(Number(n ?? 0));
-    return new Intl.NumberFormat('vi-VN').format(num) + '₫';
-};
-
-const esc = s => String(s).replace(/[&<>"']/g, c => (
-    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
-));
-
-const titleCase = s => s.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-
-/* ----- automatic images -----
-   1. a full https:// (or data:/absolute/../) link is used as-is
-   2. a plain file name is looked up inside product_images/
-   3. no img field at all -> product_images/<id>.png
-   4. if that file doesn't exist, a gradient placeholder with initials is drawn  */
+/* ---------- automatic images ---------- */
 const IMG_DIR = '../product_images/';
-
-function toVndValue(rawValue) {
-    const parsed = Number(String(rawValue ?? '').replace(/[^0-9.-]+/g, ''));
-    if (!Number.isFinite(parsed)) return 0;
-    // If it's a small dollar value (< 1000), convert to VND
-    return parsed > 1000 ? parsed : parsed * 25000;
-}
-
-function normalizeImageSource(src) {
-    if (!src) return null;
-    const value = String(src).trim();
-    if (!value) return null;
-    if (/^(https?:|data:|\/)/.test(value) || value.startsWith('../')) return value;
-    if (value.startsWith('product_images/') || value.startsWith('images/')) return `../${value}`;
-    if (value.includes('/')) return `../${value}`;
-    return `${IMG_DIR}${value}`;
-}
-
-function preferredLocalImageForName(name) {
-    const text = String(name || '').toLowerCase();
-    const mappings = [
-        { keys: ['pubg'], file: 'Pubg.jpg' },
-        { keys: ['genshin', 'genesis'], file: 'Genshin Impact.webp' },
-        { keys: ['minecraft'], file: 'Minecraft.png' },
-        { keys: ['mobile legends', 'mobile legend'], file: 'Mobile Legend.webp' },
-        { keys: ['valorant', 'vp'], file: 'Valorant.webp' },
-        { keys: ['free fire'], file: 'Free Fire.webp' },
-        { keys: ['nintendo', 'eshop'], file: 'Nitendo.webp' },
-        { keys: ['xbox', 'live'], file: 'Xbox.webp' },
-        { keys: ['playstation'], file: 'PlayStation.webp' },
-        { keys: ['steam'], file: 'Steam.webp' },
-        { keys: ['roblox'], file: 'Roblox.webp' }
-    ];
-
-    const match = mappings.find(m => m.keys.some(key => text.includes(key)));
-    return match ? `${IMG_DIR}${match.file}` : null;
-}
-
-// maintain Tuan's branch because of better integration with backend
-const imageFor = p => {
-    const src = normalizeImageSource(p.img || p.imageUrl || p.image_url || `${p.id}.png`);
-    return src || `${IMG_DIR}testing.png`;
+const imageFor = product => {
+    const src = (product && product.img) || `${(product && product.id) || 'product'}.png`;
+    if (/^(https?:|data:|\/|\.\.\/)/i.test(src)) return src;
+    return src.startsWith('product_images/') ? '../' + src : IMG_DIR + src;
 };
 
 function placeholder(name) {
-    const initials = name.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+    const initials = String(name || 'Product').split(/\s+/).filter(Boolean).slice(0, 2)
+        .map(word => word[0]).join('').toUpperCase();
     const svg =
         `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300">` +
         `<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">` +
@@ -80,11 +30,10 @@ function placeholder(name) {
     return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
 }
 
-function imgTag(p, cls) {
-    return `<img ${cls ? `class="${cls}" ` : ''}src="${esc(imageFor(p))}" alt="${esc(p.name)}" data-fallback="${esc(p.name)}">`;
+function imgTag(product, className) {
+    return `<img ${className ? `class="${esc(className)}" ` : ''}src="${esc(imageFor(product))}" alt="${esc(product.name)}" data-fallback="${esc(product.name)}">`;
 }
 
-// swap any broken image for the placeholder
 function armFallbacks(root) {
     (root || document).querySelectorAll('img[data-fallback]').forEach(img => {
         const useFallback = () => {
@@ -97,136 +46,136 @@ function armFallbacks(root) {
 }
 
 function avatarColor(name) {
-    let h = 0;
-    for (const c of name) h = (h * 31 + c.charCodeAt(0)) % 360;
-    return `hsl(${h} 55% 45%)`;
+    let hash = 0;
+    for (const char of String(name || 'Customer')) hash = (hash * 31 + char.charCodeAt(0)) % 360;
+    return `hsl(${hash} 55% 45%)`;
 }
 
-function toast(msg) {
-    const t = $('#pp-toast');
-    t.textContent = msg;
-    t.classList.add('show');
+function toast(message) {
+    const element = $('#pp-toast');
+    if (!element) return;
+    element.textContent = message;
+    element.classList.add('show');
     clearTimeout(toast.timer);
-    toast.timer = setTimeout(() => t.classList.remove('show'), 2200);
+    toast.timer = setTimeout(() => element.classList.remove('show'), 2200);
 }
 
 /* =========================================================
-   BACKEND PRODUCT -> the shape this page draws
+   BACKEND PRODUCT -> the view model used by this page.
+   This branch stores product-level prices and size/stock choices;
+   it does not use SKU records.
    ========================================================= */
-const USD_RATE = 24000;
+function toProduct(product) {
+    if (!product || product.id == null) throw new Error('The backend returned an invalid product record.');
 
-function parseTierPrice(tierName, fallbackPrice) {
-    const raw = String(tierName || '').trim();
-    if (/\b(VND|VNĐ|Đ)\b/i.test(raw)) {
-        const cleaned = raw.replace(/[^\d]/g, '');
-        return cleaned ? parseInt(cleaned, 10) : fallbackPrice;
-    }
-    const cleanForNum = raw.replace(/[,\.]/g, '');
-    const match = cleanForNum.match(/\d+/);
-    if (!match) return fallbackPrice;
-    const num = parseInt(match[0], 10);
-    if (raw.includes('$') || /USD/i.test(raw) || num < 1000) {
-        return Math.round(num * USD_RATE);
-    }
-    return num;
-}
+    const basePrice = Number(product.price) || 0;
+    const discountedPrice = Number(product.discountedPrice) > 0 ? Number(product.discountedPrice) : basePrice;
+    const oldPrice = basePrice > discountedPrice ? basePrice : undefined;
+    const feedback = buildFeedback(product.ratings, product.reviews);
+    const sizes = Array.isArray(product.sizes) ? product.sizes : [];
 
-function toProduct(p) {
-    const rawPrice = p.discountedPrice > 0 ? p.discountedPrice : p.price;
-    const basePrice = toVndValue(rawPrice);
-    const oldBase = p.price > rawPrice ? toVndValue(p.price) : undefined;
-    const ratings = p.ratings || [];
-    const average = ratings.length ? ratings.reduce((s, r) => s + r.rating, 0) / ratings.length : 0;
-    const feedback = buildFeedback(p.ratings, p.reviews);
-
-    // every size becomes one option you can pick; no sizes = a single option
-    const sizes = Array.from(p.sizes || []);
-    let variants = sizes.length
-        ? sizes.map(s => {
-            const tierPrice = parseTierPrice(s.name, basePrice);
-            return { 
-                label: `${p.title} (${s.name})`, 
-                size: s.name, 
-                price: tierPrice, 
-                old: oldBase ? Math.round(tierPrice * (p.price / (p.discountedPrice || p.price))) : undefined, 
-                stock: s.quantity > 0 
-            };
-        })
-        : [{ label: p.title, price: basePrice, old: oldBase, stock: p.quantity > 0 }];
-
-    // Sort variants from cheapest to most expensive so the lowest price is selected by default
-    variants.sort((a, b) => a.price - b.price);
+    const variants = sizes.length
+        ? sizes.map(size => ({
+            label: `${product.title || 'Product'} - ${size.name || 'Standard'}`,
+            size: size.name || '',
+            price: discountedPrice,
+            old: oldPrice,
+            stockQuantity: Math.max(0, Math.min(Number(product.quantity) || 0, Number(size.quantity) || 0)),
+            stock: Math.min(Number(product.quantity) || 0, Number(size.quantity) || 0) > 0
+        }))
+        : [{
+            label: product.title || 'Product',
+            price: discountedPrice,
+            old: oldPrice,
+            stockQuantity: Math.max(0, Number(product.quantity) || 0),
+            stock: Number(product.quantity) > 0
+        }];
 
     return {
-        id: String(p.id),
-        productId: p.id,                                         // the real backend id (needed for cart / reviews later)
-        name: p.title,
-        category: (p.category && p.category.name) || 'Other',
+        id: String(product.id),
+        productId: product.id,
+        name: product.title || 'Untitled product',
+        category: (product.category && product.category.name) || 'Other',
         rating: feedback.rating,
         reviewCount: feedback.reviewCount,
-        img: p.imageUrl || undefined,
-        description: p.description ? p.description.split(/\n+/) : [],
+        img: product.imageUrl || undefined,
+        description: product.description ? String(product.description).split(/\n+/) : [],
         variants,
-        reviews: feedback.reviews,
+        reviews: feedback.reviews
     };
 }
 
 /* =========================================================
    PICK THE PRODUCT FROM THE URL
    ========================================================= */
-// API_BASE is inherited from Api.js
-let product = null;
-const params = new URLSearchParams(location.search);
-const wantedId = params.get('id') || Object.keys(PRODUCTS)[0];
-
-// a product that has no entry anywhere still opens a page, with placeholder content
-function makeFallback(name) {
-    return {
-        name,
-        category: 'Other',
-        rating: 0,
-        reviewCount: 0,
-        description: ['Full details for this product are coming soon.'],
-        variants: [{ label: `${name} - Standard`, price: 10 }],   // placeholder price
-        reviews: [],
-    };
-}
+const params = new URLSearchParams(window.location.search);
+const staticProducts = typeof PRODUCTS !== 'undefined' ? PRODUCTS : {};
+const wantedId = params.get('id') || '';
 
 async function loadProduct() {
-    // a number means a real product in the database
+    if (!wantedId) throw new Error('No product was selected. Return to the store and choose a product.');
+
+    // Numeric IDs always mean database records. Do not silently replace a failed
+    // backend request with a sample card, because that makes a broken connection
+    // look like a successful product load.
     if (/^\d+$/.test(wantedId)) {
-        try {
-            return toProduct(await apiFetch('/api/products/id/' + wantedId));
-        } catch (err) {
-            console.warn('Could not load product from the backend:', err.message);
-            setTimeout(() => toast(err.message), 300);
-        }
+        const response = await apiFetch('/api/products/id/' + encodeURIComponent(wantedId));
+        return toProduct(response);
     }
-    // otherwise (home-page sample cards, or the backend failed) use data.js
-    const data = PRODUCTS[wantedId] || makeFallback(params.get('name') || titleCase(wantedId));
-    return { id: wantedId, ...data };
+
+    // Non-numeric IDs are allowed only when they exist in data.js.
+    // Unknown slugs must not become fictional, purchasable-looking products.
+    if (!Object.prototype.hasOwnProperty.call(staticProducts, wantedId)) {
+        throw new Error('This product is not in the catalog. Return to the store and choose an available item.');
+    }
+    const data = staticProducts[wantedId];
+    return { id: wantedId, ...data, isDemo: true };
 }
 
-// "You might also like": other products from the backend, or data.js if it is offline
 async function loadRelated(product) {
-    let others;
     try {
         const page = await apiFetch('/api/products?pageNumber=0&pageSize=12');
-        others = page.content.map(toProduct);
-    } catch {
-        others = Object.entries(PRODUCTS).map(([key, val]) => ({ id: key, ...val }));
+        if (!page || !Array.isArray(page.content)) return [];
+        return page.content.map(toProduct)
+            .filter(item => item.id !== product.id)
+            .sort((a, b) => (b.category === product.category) - (a.category === product.category))
+            .slice(0, 4);
+    } catch (error) {
+        console.warn('Could not load related products:', error.message);
+        return [];
     }
-    return others
-        .filter(o => o.id !== product.id)
-        .sort((a, b) => (b.category === product.category) - (a.category === product.category))
-        .slice(0, 4);
+}
+
+function showProductLoadError(error) {
+    const page = $('#pp-page');
+    if (!page) return;
+    const message = error && error.message ? error.message : 'An unexpected error occurred.';
+    page.innerHTML = `
+        <div class="pp-wrap" style="padding:48px 16px;">
+            <section class="pp-card" style="max-width:720px;margin:0 auto;">
+                <h2>Unable to load this product</h2>
+                <p>${esc(message)}</p>
+                <p>Please check the backend connection and try again.</p>
+                <div class="pp-actions" style="margin-top:20px;">
+                    <button type="button" class="pp-btn primary" id="pp-retry">Retry</button>
+                    <a class="pp-btn ghost" href="../site.html#featured">Back to store</a>
+                </div>
+            </section>
+        </div>`;
+    const retry = $('#pp-retry');
+    if (retry) retry.addEventListener('click', () => window.location.reload());
 }
 
 (async function start() {
-    const product = await loadProduct();
-    initPage(product);
-    renderRelated(product);
-    if (Auth.isLoggedIn()) refreshFeedback(product);   // logged in: use the dedicated ratings/reviews endpoints
+    try {
+        const product = await loadProduct();
+        initPage(product);
+        await renderRelated(product);
+        if (Auth.isLoggedIn()) refreshFeedback(product);
+    } catch (error) {
+        console.error('Could not load product:', error);
+        showProductLoadError(error);
+    }
 })();
 
 /* =========================================================
@@ -234,13 +183,12 @@ async function loadRelated(product) {
    ========================================================= */
 function initPage(product) {
     const state = {
-        i: Math.max(0, product.variants.findIndex(v => v.stock !== false)),
-        qty: 1,
+        i: Math.max(0, product.variants.findIndex(variant => variant.stock !== false)),
+        qty: 1
     };
 
     document.title = `${product.name} | GiftCard`;
 
-    /* ----- hero ----- */
     const cover = $('#pp-cover');
     cover.src = imageFor(product);
     cover.alt = product.name;
@@ -251,132 +199,188 @@ function initPage(product) {
         ? `${product.rating.toFixed(1)} / 5 · ${product.reviewCount.toLocaleString('en-US')} ratings`
         : 'No ratings yet';
 
-    const fav = $('#pp-fav');
-    fav.addEventListener('click', () => {
-        const on = fav.classList.toggle('on');
-        fav.setAttribute('aria-pressed', on);
-        fav.textContent = on ? '♥ Favorited' : '♡ Favorite';
+    const favorite = $('#pp-fav');
+    favorite.addEventListener('click', () => {
+        const active = favorite.classList.toggle('on');
+        favorite.setAttribute('aria-pressed', String(active));
+        favorite.textContent = active ? '♥ Favorited' : '♡ Favorite';
     });
 
-    /* ----- notice / description / instructions (each hidden if missing) ----- */
-    if (product.notice) {
+    if (product.isDemo) {
+        const extraNotice = product.notice ? ` ${product.notice.title}: ${product.notice.text}` : '';
+        $('#pp-notice-title').textContent = 'Demo product';
+        $('#pp-notice-text').textContent = 'This is static sample data for display only. It is not stored in the live catalog and cannot be purchased.' + extraNotice;
+        $('#pp-notice').hidden = false;
+    } else if (product.notice) {
         $('#pp-notice-title').textContent = '⚠️ ' + product.notice.title;
         $('#pp-notice-text').textContent = product.notice.text;
         $('#pp-notice').hidden = false;
     }
 
     if (product.description && product.description.length) {
-        $('#pp-desc').innerHTML = product.description.map(t => `<p>${esc(t)}</p>`).join('');
+        $('#pp-desc').innerHTML = product.description.map(text => `<p>${esc(text)}</p>`).join('');
         $('#pp-desc-card').hidden = false;
         setupCollapse('#pp-desc', '#pp-desc-more');
     }
 
     if (product.instructions && product.instructions.length) {
-        $('#pp-guide').innerHTML =
-            `<ol class="pp-steps">${product.instructions.map(t => `<li>${esc(t)}</li>`).join('')}</ol>`;
+        $('#pp-guide').innerHTML = `<ol class="pp-steps">${product.instructions.map(text => `<li>${esc(text)}</li>`).join('')}</ol>`;
         $('#pp-guide-card').hidden = false;
         setupCollapse('#pp-guide', '#pp-guide-more');
     }
 
-    /* ----- variants ----- */
     function renderVariants() {
-        $('#pp-variants').innerHTML = product.variants.map((v, i) => {
-            const out = v.stock === false;
-            const disc = v.old && v.old > v.price ? Math.round((1 - v.price / v.old) * 100) : 0;
+        $('#pp-variants').innerHTML = product.variants.map((variant, index) => {
+            const outOfStock = variant.stock === false;
+            const discount = variant.old && variant.old > variant.price
+                ? Math.round((1 - variant.price / variant.old) * 100) : 0;
             return `
-            <button type="button" class="pp-variant${i === state.i ? ' active' : ''}" data-i="${i}" ${out ? 'disabled' : ''}>
-                ${imgTag(product)}
-                <span class="pp-v-info">
-                    <span class="pp-v-name">${esc(v.label)}</span>
-                    <span class="pp-v-price">${money(v.price)}${v.old ? `<s>${money(v.old)}</s>` : ''}</span>
-                    <span class="pp-v-meta">
-                        ${out ? '<em class="out">Out of stock</em>' : '<em class="in">In stock</em>'}
-                        ${disc ? `<b class="pp-disc">-${disc}%</b>` : ''}
+                <button type="button" class="pp-variant${index === state.i ? ' active' : ''}" data-i="${index}" ${outOfStock ? 'disabled' : ''}>
+                    ${imgTag(product)}
+                    <span class="pp-v-info">
+                        <span class="pp-v-name">${esc(variant.label)}</span>
+                        <span class="pp-v-price">${money(variant.price)}${variant.old ? `<s>${money(variant.old)}</s>` : ''}</span>
+                        <span class="pp-v-meta">
+                            ${product.isDemo ? '<em class="out">Demo only</em>' : (outOfStock ? '<em class="out">Out of stock</em>' : '<em class="in">In stock</em>')}
+                            ${discount ? `<b class="pp-disc">-${discount}%</b>` : ''}
+                        </span>
                     </span>
-                </span>
-            </button>`;
+                </button>`;
         }).join('');
         armFallbacks($('#pp-variants'));
     }
 
-    $('#pp-variants').addEventListener('click', e => {
-        const btn = e.target.closest('.pp-variant');
-        if (!btn || btn.disabled) return;
-        state.i = Number(btn.dataset.i);
+    $('#pp-variants').addEventListener('click', event => {
+        const button = event.target.closest('.pp-variant');
+        if (!button || button.disabled) return;
+        state.i = Number(button.dataset.i);
         renderVariants();
         updateTotals();
     });
 
-    /* ----- buy box ----- */
     function updateTotals() {
-        const v = product.variants[state.i];
-        const original = (v.old || v.price) * state.qty;
-        const total = v.price * state.qty;
-        const out = v.stock === false;
-
+        const variant = product.variants[state.i];
+        const available = product.isDemo
+            ? 0
+            : Math.max(0, Number(variant.stockQuantity ?? (variant.stock === false ? 0 : 10)) || 0);
+        const maxQuantity = Math.min(10, available);
+        if (maxQuantity > 0) state.qty = Math.min(state.qty, maxQuantity);
+        const original = (variant.old || variant.price) * state.qty;
+        const total = variant.price * state.qty;
+        const outOfStock = variant.stock === false || maxQuantity < 1;
         $('#pp-qty').textContent = state.qty;
-        $('#pp-selected').textContent = `Selected: ${v.label}`;
+        $('#pp-selected').textContent = `Selected: ${variant.label}`;
         $('#pp-orig').textContent = money(original);
         $('#pp-save').textContent = money(original - total);
         $('#pp-total').textContent = money(total);
-        $('#pp-add').disabled = out;
-        $('#pp-buy').disabled = out;
+        $('#pp-minus').disabled = Boolean(product.isDemo) || state.qty <= 1;
+        $('#pp-plus').disabled = Boolean(product.isDemo) || outOfStock || state.qty >= maxQuantity;
+        $('#pp-add').disabled = outOfStock;
+        $('#pp-buy').disabled = outOfStock;
     }
 
     $('#pp-minus').addEventListener('click', () => { state.qty = Math.max(1, state.qty - 1); updateTotals(); });
-    $('#pp-plus').addEventListener('click',  () => { state.qty = Math.min(10, state.qty + 1); updateTotals(); });
-    /* ----- add to cart (PUT /api/cart/add) ----- */
+    $('#pp-plus').addEventListener('click', () => { state.qty += 1; updateTotals(); });
+
+    /* Add to cart: the backend calculates the price from its product record. */
     async function addToCart(goToCart) {
-        if (!product.productId) {                       // sample products from data.js are not in the database
-            toast('Sample product: it is not in the store database yet');
+        if (!product.productId) {
+            toast('This is a demo card and is not stored in the database yet.');
             return;
         }
         if (!Auth.isLoggedIn()) {
-            location.href = ROOT + 'auth.html?next=' + encodeURIComponent(location.href);
+            window.location.href = ROOT + 'Auth.html?next=' + encodeURIComponent(window.location.href);
             return;
         }
-        const v = product.variants[state.i];
+
+        const variant = product.variants[state.i];
+        const requestedQuantity = state.qty;
+        const size = variant.size || 'Standard';
+        let addedQuantity = 0;
         $('#pp-add').disabled = true;
         $('#pp-buy').disabled = true;
         try {
-            await apiFetch('/api/cart/add', {
-                method: 'PUT',
-                body: { productId: product.productId, size: v.size || '', quantity: state.qty, price: v.price },
-            });
-            if (goToCart) { location.href = ROOT + 'cart.html'; return; }
-            toast('Added to cart ✓');
-        } catch (err) {
-            toast(err.message);
+            const cart = await apiFetch('/api/cart');
+            const cartItems = Array.isArray(cart && cart.cartItems) ? cart.cartItems : [];
+            const existing = cartItems.find(item =>
+                String(item.product && item.product.id) === String(product.productId) &&
+                String(item.size || '') === size
+            );
+            const currentQuantity = existing ? Number(existing.quantity) || 0 : 0;
+            const available = Number(variant.stockQuantity);
+            if (Number.isFinite(available) && currentQuantity + requestedQuantity > available) {
+                throw new Error(`Only ${Math.max(0, available - currentQuantity)} more unit(s) of this option are available.`);
+            }
+
+            if (existing) {
+                // Updating an existing line uses CartItemService and avoids a
+                // backend CartService branch that currently has an uninjected repository.
+                await apiFetch('/api/cart_items/update/' + existing.id, {
+                    method: 'PUT', body: { quantity: currentQuantity + requestedQuantity, size }
+                });
+                addedQuantity = requestedQuantity;
+            } else {
+                // The backend's create-item service currently initializes a new line at quantity 1.
+                // Create it once, then use the dedicated update endpoint for the remaining quantity.
+                await apiFetch('/api/cart/add', {
+                    method: 'PUT', body: { productId: product.productId, size, quantity: 1 }
+                });
+                addedQuantity = 1;
+
+                if (requestedQuantity > 1) {
+                    const refreshedCart = await apiFetch('/api/cart');
+                    const created = (refreshedCart.cartItems || []).find(item =>
+                        String(item.product && item.product.id) === String(product.productId) &&
+                        String(item.size || '') === size
+                    );
+                    if (!created) throw new Error('The cart item was created, but the frontend could not find it to set the requested quantity.');
+                    await apiFetch('/api/cart_items/update/' + created.id, {
+                        method: 'PUT', body: { quantity: requestedQuantity, size }
+                    });
+                    addedQuantity = requestedQuantity;
+                }
+            }
+
+            if (goToCart) {
+                window.location.href = ROOT + 'Cart.html';
+                return;
+            }
+            toast('Added ' + addedQuantity + (addedQuantity === 1 ? ' item' : ' items') + ' to cart ✓');
+        } catch (error) {
+            if (addedQuantity > 0) {
+                toast(`Added ${addedQuantity} of ${requestedQuantity}. Opening cart to review.`);
+                window.setTimeout(() => { window.location.href = ROOT + 'Cart.html'; }, 900);
+                return;
+            }
+            toast(error.message);
         }
-        updateTotals();                                  // puts the buttons back to normal
+        updateTotals();
     }
 
     $('#pp-add').addEventListener('click', () => addToCart(false));
-    $('#pp-buy').addEventListener('click', () => addToCart(true));      // Buy now = add, then open the cart
-
+    $('#pp-buy').addEventListener('click', () => addToCart(true));
     renderReviews(product);
-
     renderVariants();
     updateTotals();
     armFallbacks();
 }
 
-/* ----- recommended (sidebar, below reviews) ----- */
+/* ---------- recommended products ---------- */
 async function renderRelated(product) {
     const others = await loadRelated(product);
-
     if (others.length) {
-        $('#pp-rel-list').innerHTML = others.map(o => {
-            const from = Math.min(...o.variants.map(v => v.price));
+        $('#pp-rel-list').innerHTML = others.map(item => {
+            const prices = item.variants.map(variant => Number(variant.price) || 0);
+            const from = prices.length ? Math.min(...prices) : 0;
             return `
-            <a href="products.html?id=${encodeURIComponent(o.id)}&name=${encodeURIComponent(o.name)}" class="pp-rel">
-                ${imgTag(o)}
-                <div class="pp-rel-info">
-                    <h4>${esc(o.name)}</h4>
-                    <span class="pp-rel-price">From ${money(from)}</span>
-                    <div class="stars" style="--rating: ${o.rating}">★★★★★</div>
-                </div>
-            </a>`;
+                <a href="products.html?id=${encodeURIComponent(item.id)}&name=${encodeURIComponent(item.name)}" class="pp-rel">
+                    ${imgTag(item)}
+                    <div class="pp-rel-info">
+                        <h4>${esc(item.name)}</h4>
+                        <span class="pp-rel-price">From ${money(from)}</span>
+                        <div class="stars" style="--rating: ${item.rating}">★★★★★</div>
+                    </div>
+                </a>`;
         }).join('');
         armFallbacks($('#pp-rel-list'));
     } else {
@@ -384,55 +388,53 @@ async function renderRelated(product) {
     }
 }
 
-/* "See more" toggle - only shown when the text is actually taller than the box */
-function setupCollapse(boxSel, btnSel) {
-    const box = $(boxSel), btn = $(btnSel);
+function setupCollapse(boxSelector, buttonSelector) {
+    const box = $(boxSelector);
+    const button = $(buttonSelector);
+    if (!box || !button) return;
     if (box.scrollHeight <= 175) {
         box.classList.add('open');
-        btn.hidden = true;
+        button.hidden = true;
         return;
     }
-    btn.addEventListener('click', () => {
+    button.addEventListener('click', () => {
         const open = box.classList.toggle('open');
-        btn.textContent = open ? 'Show less ▲' : 'See more ▼';
+        button.textContent = open ? 'Show less ▲' : 'See more ▼';
     });
 }
-
 
 /* =========================================================
    RATINGS + REVIEWS
    GET  /api/reviews/product/{id}    GET  /api/ratings/product/{id}
    POST /api/ratings/create          POST /api/reviews/create
    ========================================================= */
-// the backend may send dates as "2026-10-24T10:15:30" or as [2026,10,24,10,15,30]
-const dateOf = v => v ? (Array.isArray(v) ? new Date(v[0], v[1] - 1, v[2], v[3] || 0, v[4] || 0) : new Date(v)) : new Date(0);
+const dateOf = value => value
+    ? (Array.isArray(value) ? new Date(value[0], value[1] - 1, value[2], value[3] || 0, value[4] || 0) : new Date(value))
+    : new Date(0);
 
-// ratings (stars) and reviews (text) are separate lists in the backend.
-// A review shows stars when the same user also left a rating.
 function buildFeedback(ratings, reviews) {
-    ratings = ratings || [];
-    reviews = reviews || [];
+    ratings = Array.isArray(ratings) ? ratings : [];
+    reviews = Array.isArray(reviews) ? reviews : [];
     const byUser = {};
-    ratings.forEach(r => { if (r.user) byUser[r.user.id] = r.rating; });
+    ratings.forEach(rating => { if (rating.user) byUser[rating.user.id] = rating.rating; });
 
     return {
-        rating: ratings.length ? ratings.reduce((s, r) => s + r.rating, 0) / ratings.length : 0,
+        rating: ratings.length ? ratings.reduce((sum, item) => sum + (Number(item.rating) || 0), 0) / ratings.length : 0,
         reviewCount: ratings.length,
-        reviews: [...reviews].sort((a, b) => dateOf(b.createdAt) - dateOf(a.createdAt)).map(r => {
-            const u = r.user || {};
-            const d = dateOf(r.createdAt);
+        reviews: [...reviews].sort((a, b) => dateOf(b.createdAt) - dateOf(a.createdAt)).map(review => {
+            const user = review.user || {};
+            const date = dateOf(review.createdAt);
             return {
-                user: ((u.firstName || '') + ' ' + (u.lastName || '')).trim() || 'Customer',
-                date: isNaN(d) || d.getTime() === 0 ? '' : d.toLocaleDateString('en-US', { dateStyle: 'medium' }),
-                rating: u.id != null ? byUser[u.id] : undefined,
-                text: r.review || '',
+                user: ((user.firstName || '') + ' ' + (user.lastName || '')).trim() || 'Customer',
+                date: isNaN(date) || date.getTime() === 0 ? '' : date.toLocaleDateString('en-US', { dateStyle: 'medium' }),
+                rating: user.id != null ? byUser[user.id] : undefined,
+                text: review.review || ''
             };
-        }),
+        })
     };
 }
 
 function renderReviews(product) {
-    // hero stars + text
     $('#pp-stars').style.setProperty('--rating', product.rating);
     $('#pp-rating-text').textContent = product.reviewCount
         ? `${product.rating.toFixed(1)} / 5 · ${product.reviewCount.toLocaleString('en-US')} ratings`
@@ -446,31 +448,31 @@ function renderReviews(product) {
         </div>`;
 
     const reviews = product.reviews || [];
-    $('#pp-rev-list').innerHTML = reviews.length ? reviews.map(r => `
+    $('#pp-rev-list').innerHTML = reviews.length ? reviews.map(review => `
         <div class="pp-review">
-            <div class="pp-avatar" style="background:${avatarColor(r.user)}">${esc(r.user[0].toUpperCase())}</div>
+            <div class="pp-avatar" style="background:${avatarColor(review.user)}">${esc(String(review.user || 'C')[0].toUpperCase())}</div>
             <div class="pp-rev-body">
                 <div class="pp-rev-top">
-                    <b>${esc(r.user)}</b>
-                    ${r.rating != null ? `<div class="stars" style="--rating: ${r.rating}">★★★★★</div>` : ''}
+                    <b>${esc(review.user)}</b>
+                    ${review.rating != null ? `<div class="stars" style="--rating: ${review.rating}">★★★★★</div>` : ''}
                 </div>
-                <div class="pp-rev-date">${esc(r.date)}</div>
-                <p>${esc(r.text)}</p>
+                <div class="pp-rev-date">${esc(review.date)}</div>
+                <p>${esc(review.text)}</p>
             </div>
         </div>`).join('') : '<p>No reviews yet.</p>';
 
     renderReviewForm(product);
 }
 
-// reload both lists (needs a login on some backends, so fall back to the lists inside the product)
 async function refreshFeedback(product) {
     if (!product.productId) return;
     try {
-        let ratings, reviews;
+        let ratings;
+        let reviews;
         try {
             [reviews, ratings] = await Promise.all([
                 apiFetch('/api/reviews/product/' + product.productId),
-                apiFetch('/api/ratings/product/' + product.productId),
+                apiFetch('/api/ratings/product/' + product.productId)
             ]);
         } catch {
             const fresh = await apiFetch('/api/products/id/' + product.productId);
@@ -479,12 +481,11 @@ async function refreshFeedback(product) {
         }
         Object.assign(product, buildFeedback(ratings, reviews));
         renderReviews(product);
-    } catch (err) {
-        console.warn('Could not refresh reviews:', err.message);
+    } catch (error) {
+        console.warn('Could not refresh reviews:', error.message);
     }
 }
 
-// the star picker + review box, or a "log in" note
 function renderReviewForm(product) {
     let box = $('#pp-rev-form');
     if (!box) {
@@ -492,7 +493,7 @@ function renderReviewForm(product) {
         box.id = 'pp-rev-form';
         $('#pp-rev-list').before(box);
 
-        const style = document.createElement('style');       // styles for the form, kept here so products.css stays untouched
+        const style = document.createElement('style');
         style.textContent = `
             .rf{ margin-bottom:18px; }
             .rf-stars{ display:flex; gap:4px; margin-bottom:10px; }
@@ -509,50 +510,64 @@ function renderReviewForm(product) {
         document.head.appendChild(style);
     }
 
-    if (!product.productId) { box.innerHTML = ''; return; }          // sample product, not in the database
+    if (!product.productId) {
+        box.innerHTML = '';
+        return;
+    }
 
     if (!Auth.isLoggedIn()) {
-        box.innerHTML = `<p class="rf-note"><a href="${ROOT}auth.html?next=${encodeURIComponent(location.href)}">Log in</a> to rate and review this product.</p>`;
+        box.innerHTML = `<p class="rf-note"><a href="${ROOT}Auth.html?next=${encodeURIComponent(window.location.href)}">Log in</a> to rate and review this product.</p>`;
         return;
     }
 
     box.innerHTML = `
         <form class="rf" novalidate>
             <div class="rf-stars" role="group" aria-label="Your rating">
-                ${[1, 2, 3, 4, 5].map(n => `<button type="button" data-v="${n}" aria-label="${n} star${n > 1 ? 's' : ''}">★</button>`).join('')}
+                ${[1, 2, 3, 4, 5].map(number => `<button type="button" data-v="${number}" aria-label="${number} star${number > 1 ? 's' : ''}">★</button>`).join('')}
             </div>
-            <textarea name="review" rows="3" placeholder="Write a review (optional)"></textarea>
+            <textarea name="review" rows="3" minlength="10" maxlength="200" placeholder="Write a review (10–200 characters; optional when rating with stars)"></textarea>
             <p class="rf-msg" role="alert"></p>
             <button type="submit" class="rf-btn">Submit</button>
         </form>`;
 
-    const formEl = box.querySelector('form');
-    const stars = formEl.querySelectorAll('.rf-stars button');
+    const form = box.querySelector('form');
+    const stars = form.querySelectorAll('.rf-stars button');
     let picked = 0;
 
-    stars.forEach(b => b.addEventListener('click', () => {
-        picked = Number(b.dataset.v);
-        stars.forEach(s => s.classList.toggle('on', Number(s.dataset.v) <= picked));
+    stars.forEach(button => button.addEventListener('click', () => {
+        picked = Number(button.dataset.v);
+        stars.forEach(star => star.classList.toggle('on', Number(star.dataset.v) <= picked));
     }));
 
-    formEl.addEventListener('submit', async e => {
-        e.preventDefault();
-        const msg = formEl.querySelector('.rf-msg');
-        const btn = formEl.querySelector('.rf-btn');
-        const text = formEl.review.value.trim();
-        msg.textContent = '';
+    form.addEventListener('submit', async event => {
+        event.preventDefault();
+        const message = form.querySelector('.rf-msg');
+        const button = form.querySelector('.rf-btn');
+        const reviewText = form.elements.namedItem('review').value.trim();
+        message.textContent = '';
 
-        if (!picked && !text) { msg.textContent = 'Pick a star rating or write a review.'; return; }
+        if (!picked && !reviewText) {
+            message.textContent = 'Pick a star rating or write a review.';
+            return;
+        }
+        if (reviewText && (reviewText.length < 10 || reviewText.length > 200)) {
+            message.textContent = 'A written review must be between 10 and 200 characters.';
+            return;
+        }
 
-        btn.disabled = true;
+        button.disabled = true;
         try {
-            if (picked) await apiFetch('/api/ratings/create', { method: 'POST', body: { productId: product.productId, rating: picked } });
-            if (text)   await apiFetch('/api/reviews/create', { method: 'POST', body: { productId: product.productId, review: text } });
+            if (picked) await apiFetch('/api/ratings/create', {
+                method: 'POST', body: { productId: product.productId, rating: picked }
+            });
+            if (reviewText) await apiFetch('/api/reviews/create', {
+                method: 'POST', body: { productId: product.productId, review: reviewText }
+            });
             await refreshFeedback(product);
             toast('Thanks for your feedback ✓');
-        } catch (err) {
-            msg.textContent = err.message;
-            btn.disabled = false;
+        } catch (error) {
+            message.textContent = error.message;
+            button.disabled = false;
         }
     });
 }
