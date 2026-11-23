@@ -77,6 +77,7 @@
         <div class="ad-tabs">
             <button type="button" class="ad-tab active" data-tab="orders">Orders</button>
             <button type="button" class="ad-tab" data-tab="products">Products</button>
+            <button type="button" class="ad-tab" data-tab="dashboard">Dashboard</button>
         </div>
         <p class="ct-error" id="ad-msg" role="alert"></p>
 
@@ -85,7 +86,7 @@
             <div class="ad-toolbar"><div class="ad-chips" id="ad-chips"></div></div>
             <div class="ad-table-wrap">
                 <table class="ad-table">
-                    <thead><tr><th>Order</th><th>Customer</th><th>Date</th><th>Items</th><th>Total</th><th>Status</th><th>Actions</th></tr></thead>
+                    <thead><tr><th>Order</th><th>Customer</th><th>Date</th><th>Items</th><th>Total</th><th>Payment</th><th>Status</th><th>Actions</th></tr></thead>
                     <tbody id="ad-orders"></tbody>
                 </table>
             </div>
@@ -103,6 +104,16 @@
                     <tbody id="ad-products"></tbody>
                 </table>
             </div>
+        </section>
+        <!-- ===== dashboard tab ===== -->
+        <section class="ct-card ad-panel" id="panel-dashboard" hidden>
+            <div class="ad-kpis">
+                <div class="ad-kpi revenue"><span>Total revenue</span><b id="kpi-revenue">—</b></div>
+                <div class="ad-kpi"><span>Total orders</span><b id="kpi-orders">—</b></div>
+                <div class="ad-kpi ok"><span>Successful orders</span><b id="kpi-success">—</b></div>
+                <div class="ad-kpi bad"><span>Cancelled orders</span><b id="kpi-cancelled">—</b></div>
+            </div>
+            <p class="ad-hint">Revenue counts delivered orders only.</p>
         </section>
     </div>
 </main>
@@ -171,6 +182,21 @@ const fmt = v => {
     return d && !isNaN(d) ? d.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) : '';
 };
 const orderTotal = o => o.totalDiscountedPrice > 0 ? o.totalDiscountedPrice : (o.totalPrice || 0);
+const paymentMethodOf = o => String((o.paymenDetails || {}).paymentMethod || '').toUpperCase();
+
+const payBadge = o => {
+    const m = paymentMethodOf(o);
+    const cls = m.includes('VNPAY') ? 'vnpay' : m === 'COD' ? 'cod' : 'unknown';
+    const label = cls === 'vnpay' ? 'VNPay' : cls === 'cod' ? 'COD' : (m || 'Not set');
+    return `<span class="ad-pay ${cls}">${esc(label)}</span>`;
+};
+const LOW_STOCK_THRESHOLD = 10;
+const stockBadge = qty => {
+    const n = Number(qty);
+    if (n <= 0) return '<span class="ad-stock out">Out of stock</span>';
+    if (n < LOW_STOCK_THRESHOLD) return '<span class="ad-stock low">Low Stock</span>';
+    return '';
+};
 
 let orders = [];
 let products = [];
@@ -246,13 +272,14 @@ function renderOrders() {
             <td>${esc(fmt(o.orderDate || o.createdAt))}</td>
             <td>${o.totalItem || (o.orderItems || []).length}</td>
             <td class="ad-price">${money(orderTotal(o))}</td>
+               <td>${payBadge(o)}</td>
             <td>${badge(o.orderStatus)}</td>
             <td><div class="ad-actions">
                 ${btn('confirm', 'Confirm', 'ok')}${btn('ship', 'Ship', 'ok')}${btn('deliver', 'Delivered', 'ok')}
                 ${btn('cancel', 'Cancel', 'danger')}${btn('delete', 'Delete', 'danger')}
             </div></td>
         </tr>`;
-    }).join('') : `<tr><td colspan="7" class="ad-hint">No orders here.</td></tr>`;
+    }).join('') : `<tr><td colspan="8" class="ad-hint">No orders here.</td></tr>`;
 }
 
 $('#ad-chips').addEventListener('click', e => {
@@ -300,7 +327,7 @@ function renderProducts() {
             <td><b>${esc(p.title)}</b><small>${esc(p.brand || '')}</small></td>
             <td>${esc((p.category && p.category.name) || '—')}</td>
             <td class="ad-price">${money(p.discountedPrice > 0 ? p.discountedPrice : p.price)}</td>
-            <td>${p.quantity}</td>
+            <td>${p.quantity} ${stockBadge(p.quantity)}</td>
             <td><div class="ad-actions">
                 <button type="button" class="ad-btn ok" data-act="edit" data-id="${p.id}">Edit</button>
                 <button type="button" class="ad-btn danger" data-act="del" data-id="${p.id}">Delete</button>
@@ -423,15 +450,29 @@ $('#ad-products').addEventListener('click', async e => {
         handleError(err);
     }
 });
+/* ---------- dashboard ---------- */
+function renderDashboard() {
+    const delivered = orders.filter(o => norm(o.orderStatus) === 'DELIVERED');
+    const cancelled = orders.filter(o => norm(o.orderStatus) === 'CANCELLED');
+    const revenue = delivered.reduce((sum, o) => sum + orderTotal(o), 0);
 
+    $('#kpi-revenue').textContent = money(revenue);
+    $('#kpi-orders').textContent = orders.length;
+    $('#kpi-success').textContent = delivered.length;
+    $('#kpi-cancelled').textContent = cancelled.length;
+}
 /* ---------- tabs ---------- */
 document.querySelectorAll('.ad-tab').forEach(tab => tab.addEventListener('click', async () => {
     document.querySelectorAll('.ad-tab').forEach(t => t.classList.toggle('active', t === tab));
     $('#panel-orders').hidden = tab.dataset.tab !== 'orders';
     $('#panel-products').hidden = tab.dataset.tab !== 'products';
+    $('#panel-dashboard').hidden = tab.dataset.tab !== 'dashboard';
     say('');
     if (tab.dataset.tab === 'products' && !productsLoaded) {
         try { await loadProducts(); } catch (err) { handleError(err); }
+    }
+    if (tab.dataset.tab === 'dashboard') {
+        try { await loadOrders(); renderDashboard(); } catch (err) { handleError(err); }
     }
 }));
 
