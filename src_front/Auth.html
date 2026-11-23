@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Log in | GiftCard</title>
     <link rel="stylesheet" href="site.css">
-    <link rel="stylesheet" href="auth.css">
+    <link rel="stylesheet" href="Auth.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
@@ -17,7 +17,7 @@
 
         <!-- ================= LEFT: switches between the two modes ================= -->
         <section class="au-intro">
-            <a href="site.html" class="au-logo"><img src="header_images/logo.png" alt="GiftCards"></a>
+            <a href="site.html" class="au-logo"><img src="header_images/logo.jpeg" alt="GiftCards"></a>
 
             <div id="au-intro-login">
                 <h1>One account for all of our gift cards</h1>
@@ -50,7 +50,7 @@
                     <button type="submit" class="au-go" aria-label="Log in">&#10140;</button>
                 </div>
                 <p class="au-error" id="login-error" role="alert"></p>
-                <a href="" class="au-link">Forgot your password?</a>
+                <span class="au-link" aria-disabled="true" title="Password recovery has not been connected to the backend yet">Password recovery is not available yet.</span>
             </form>
 
             <!-- SIGN UP -->
@@ -80,6 +80,7 @@
     <a href="site.html" class="au-back">&#10094; Back to store</a>
 </main>
 
+<script src="config.js"></script>
 <script src="api.js"></script>
 <script>
 /* ---------- social icons: the same ones as the footer (decorative for now) ---------- */

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Checkout | GiftCard</title>
     <link rel="stylesheet" href="site.css">
-    <link rel="stylesheet" href="cart.css">
+    <link rel="stylesheet" href="Cart.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
@@ -17,15 +17,15 @@
     <div class="container">
         <div class="navbar">
             <div class="logo">
-                <a href="site.html"><img src="header_images/logo.png" width="250px" alt="GiftCards"></a>
+                <a href="site.html"><img src="header_images/logo.jpeg" width="250px" alt="GiftCards"></a>
             </div>
             <nav>
                 <ul>
                     <li><a href="site.html">Home</a></li>
                     <li><a href="site.html#featured">Gift Cards</a></li>
                     <li><a href="site.html#vouchers">Vouchers</a></li>
-                    <li><a href="orders.html">My Orders</a></li>
-                    <li><a href="admin.html">Admin</a></li>
+                    <li><a href="Orders.html">My Orders</a></li>
+                    <li><a href="Admin.html">Admin</a></li>
                 </ul>
             </nav>
 
@@ -65,7 +65,7 @@
 <main class="ct-wrap">
     <div class="ct-head">
         <h1>Checkout</h1>
-        <a href="cart.html" class="view-all">&#10094; Back to cart</a>
+        <a href="Cart.html" class="view-all">&#10094; Back to cart</a>
     </div>
 
     <div class="ct-state" id="ct-state"><p>Loading your order...</p></div>
@@ -105,13 +105,11 @@
     </div>
 </footer>
 
+<script src="config.js"></script>
 <script src="api.js"></script>
 <script>
 const $ = sel => document.querySelector(sel);
-const money = n => {
-    const num = Math.round(Number(n ?? 0));
-    return new Intl.NumberFormat('vi-VN').format(num) + '₫';
-};
+const money = n => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n);
 const esc = s => String(s).replace(/[&<>"']/g, c => (
     { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
 ));
@@ -127,7 +125,7 @@ function showState(html) {
 
 async function init() {
     if (!Auth.isLoggedIn()) {
-        location.href = 'auth.html?next=' + encodeURIComponent(location.href);
+        location.href = 'Auth.html?next=' + encodeURIComponent(location.href);
         return;
     }
     try {
@@ -175,7 +173,7 @@ $('#ct-form').addEventListener('submit', async e => {
     button.disabled = true;
     try {
         await apiFetch('/api/orders', { method: 'POST', body: address });
-        location.href = 'orders.html';
+        location.href = 'Orders.html';
     } catch (err) {
         msg.textContent = err.message;
         button.disabled = false;

@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin | GiftCard</title>
     <link rel="stylesheet" href="site.css">
-    <link rel="stylesheet" href="cart.css">
-    <link rel="stylesheet" href="orders.css">
-    <link rel="stylesheet" href="admin.css">
+    <link rel="stylesheet" href="Cart.css">
+    <link rel="stylesheet" href="Orders.css">
+    <link rel="stylesheet" href="Admin.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
@@ -19,15 +19,15 @@
     <div class="container">
         <div class="navbar">
             <div class="logo">
-                <a href="site.html"><img src="header_images/logo.png" width="250px" alt="GiftCards"></a>
+                <a href="site.html"><img src="header_images/logo.jpeg" width="250px" alt="GiftCards"></a>
             </div>
             <nav>
                 <ul>
                     <li><a href="site.html">Home</a></li>
                     <li><a href="site.html#featured">Gift Cards</a></li>
                     <li><a href="site.html#vouchers">Vouchers</a></li>
-                    <li><a href="orders.html">My Orders</a></li>
-                    <li><a href="admin.html">Admin</a></li>
+                    <li><a href="Orders.html">My Orders</a></li>
+                    <li><a href="Admin.html">Admin</a></li>
                 </ul>
             </nav>
 
@@ -113,7 +113,7 @@
     <form class="ct-form" id="ad-form" novalidate>
         <label class="full">Title <input name="title" required></label>
         <label class="full">Description <textarea name="description"></textarea></label>
-        <label class="full">Image (file name in product_images/, or a full link) <input name="imageUrl" placeholder="netflix.png"></label>
+        <label class="full">Image (file name in product_images/, or a full link) <input name="imageUrl" placeholder="testing.png" required></label>
         <label>Brand <input name="brand"></label>
         <label>Color <input name="color"></label>
         <label>Price <input name="price" type="number" min="0" step="1" required></label>
@@ -141,13 +141,11 @@
     </div>
 </footer>
 
+<script src="config.js"></script>
 <script src="api.js"></script>
 <script>
 const $ = sel => document.querySelector(sel);
-const money = n => {
-    const num = Math.round(Number(n ?? 0));
-    return new Intl.NumberFormat('vi-VN').format(num) + '₫';
-};
+const money = n => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => (
     { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
 ));
@@ -157,7 +155,7 @@ const imageFor = url => {
     return url.startsWith('product_images/') ? url : 'product_images/' + url;
 };
 
-/* ---------- statuses (same rules as orders.html) ---------- */
+/* ---------- statuses (same rules as Orders.html) ---------- */
 const STATUSES = ['PENDING', 'CONFIRMED', 'SHIPPED', 'DELIVERED', 'CANCELLED'];
 const LABEL = { PENDING: 'Pending', CONFIRMED: 'Confirmed', SHIPPED: 'Shipped', DELIVERED: 'Delivered', CANCELLED: 'Cancelled' };
 const norm = s => {
@@ -189,7 +187,7 @@ function say(msg) { $('#ad-msg').textContent = msg || ''; }
 function handleError(err) {
     if (err.status === 403) {
         showState(`<p>This page needs an admin account.</p>
-                   <a class="ct-btn primary" href="auth.html?next=${encodeURIComponent(location.href)}" id="relogin">Log in as admin</a>`);
+                   <a class="ct-btn primary" href="Auth.html?next=${encodeURIComponent(location.href)}" id="relogin">Log in as admin</a>`);
         $('#relogin').addEventListener('click', () => Auth.clear());
     } else {
         say(err.message);
@@ -319,25 +317,37 @@ function openDialog(product) {
     form.querySelectorAll('[data-create-only]').forEach(el => el.hidden = !!product);   // categories only when creating
 
     if (product) {
-        form.title.value = product.title || '';
-        form.description.value = product.description || '';
-        form.imageUrl.value = product.imageUrl || '';
-        form.brand.value = product.brand || '';
-        form.color.value = product.color || '';
-        form.price.value = product.price;
-        form.discountedPrice.value = product.discountedPrice;
-        form.discountedPercent.value = product.discountedPercent;
-        form.quantity.value = product.quantity;
-        form.sizes.value = Array.from(product.sizes || []).map(s => `${s.name}:${s.quantity}`).join(', ');
+        form.elements.namedItem('title').value = product.title || '';
+        form.elements.namedItem('description').value = product.description || '';
+        form.elements.namedItem('imageUrl').value = product.imageUrl || '';
+        form.elements.namedItem('brand').value = product.brand || '';
+        form.elements.namedItem('color').value = product.color || '';
+        form.elements.namedItem('price').value = product.price ?? '';
+        form.elements.namedItem('discountedPrice').value = Number(product.discountedPrice) > 0 ? product.discountedPrice : '';
+        form.elements.namedItem('discountedPercent').value = product.discountedPercent ?? '';
+        form.elements.namedItem('quantity').value = product.quantity ?? 0;
+        form.elements.namedItem('sizes').value = Array.from(product.sizes || []).map(size => `${size.name}:${size.quantity}`).join(', ');
     }
     dialog.showModal();
 }
 
 // "S:30, M:40" -> [{name:"S", quantity:30}, {name:"M", quantity:40}]
 function parseSizes(text) {
+    const seen = new Set();
     return text.split(',').map(part => part.trim()).filter(Boolean).map(part => {
-        const [name, qty] = part.split(':');
-        return { name: name.trim(), quantity: Number(qty) || 0 };
+        const pieces = part.split(':');
+        if (pieces.length !== 2) throw new Error(`Invalid option \"${part}\". Use the format Name:Stock.`);
+        const name = pieces[0].trim();
+        const quantityText = pieces[1].trim();
+        const quantity = Number(quantityText);
+        const key = name.toLowerCase();
+        if (!name) throw new Error('Each product option needs a name.');
+        if (quantityText === '' || !Number.isInteger(quantity) || quantity < 0) {
+            throw new Error(`Stock for option \"${name}\" must be a non-negative whole number.`);
+        }
+        if (seen.has(key)) throw new Error(`Option \"${name}\" is listed more than once.`);
+        seen.add(key);
+        return { name, quantity };
     });
 }
 
@@ -347,28 +357,50 @@ form.addEventListener('submit', async e => {
     const msg = $('#ad-form-msg');
     msg.textContent = '';
 
+    const title = String(f.title || '').trim();
+    // The backend requires imageUrl on create. On edit, keep the saved URL
+    // when the field is left blank so users do not accidentally erase it.
+    const imageUrl = String(f.imageUrl || '').trim() || String(editing && editing.imageUrl || '').trim();
     const price = Number(f.price);
-    if (!f.title.trim() || !(price > 0)) {
-        msg.textContent = 'A title and a price above 0 are required.';
+    if (!title || (!imageUrl && !editing) || !Number.isInteger(price) || price <= 0) {
+        msg.textContent = 'A title, an image path or URL, and a whole-number price above 0 are required.';
         return;
     }
+
     const discountedPrice = f.discountedPrice === '' ? price : Number(f.discountedPrice);
-    const discountedPercent = f.discountedPercent === ''
-        ? Math.round((1 - discountedPrice / price) * 100)
-        : Number(f.discountedPercent);
+    if (!Number.isInteger(discountedPrice) || discountedPrice <= 0 || discountedPrice > price) {
+        msg.textContent = 'The discounted price must be a whole number greater than 0 and no higher than the original price.';
+        return;
+    }
+
+    const calculatedPercent = Math.round((1 - discountedPrice / price) * 100);
+    const discountedPercent = f.discountedPercent === '' ? calculatedPercent : Number(f.discountedPercent);
+    if (!Number.isInteger(discountedPercent) || discountedPercent < 0 || discountedPercent > 100 || discountedPercent !== calculatedPercent) {
+        msg.textContent = `Discount % must be between 0 and 100 and match the prices (${calculatedPercent}%).`;
+        return;
+    }
+
+    const quantity = f.quantity === '' ? 0 : Number(f.quantity);
+    if (!Number.isInteger(quantity) || quantity < 0) {
+        msg.textContent = 'Stock quantity must be a non-negative whole number.';
+        return;
+    }
+
+    let sizes;
+    try { sizes = parseSizes(f.sizes || ''); }
+    catch (error) { msg.textContent = error.message; return; }
 
     const common = {
-        title: f.title.trim(),
-        description: f.description.trim(),
-        imageUrl: f.imageUrl.trim(),
-        brand: f.brand.trim(),
-        color: f.color.trim(),
+        title,
+        description: String(f.description || '').trim(),
+        imageUrl,
+        brand: String(f.brand || '').trim(),
+        color: String(f.color || '').trim(),
         price,
-        discountedPrice,
-        discountedPercent,
-        quantity: Number(f.quantity) || 0,
+        discountedPrice: discountedPrice > 0 ? discountedPrice : price,
+        discountedPercent: discountedPrice > 0 ? discountedPercent : 0,
+        quantity,
     };
-    const sizes = parseSizes(f.sizes);
 
     $('#ad-save').disabled = true;
     try {
@@ -438,7 +470,7 @@ document.querySelectorAll('.ad-tab').forEach(tab => tab.addEventListener('click'
 /* ---------- start ---------- */
 (async function init() {
     if (!Auth.isLoggedIn()) {
-        location.href = 'auth.html?next=' + encodeURIComponent(location.href);
+        location.href = 'Auth.html?next=' + encodeURIComponent(location.href);
         return;
     }
     try {

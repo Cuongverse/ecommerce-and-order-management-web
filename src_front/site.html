@@ -1,7 +1,8 @@
 <!DOCTYPE html>
-<html lang = "en">
+<html lang="en">
     <head>
         <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>GiftCard | Website Design</title>
         <link rel="stylesheet" href = "site.css">
         <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,15 +14,15 @@
     <div class="container">
         <div class="navbar">
             <div class="logo">
-                <img src="header_images/logo.png" width="250px">
+                <img src="header_images/logo.jpeg" width="250px">
             </div>
             <nav>
                 <ul>
                     <li><a href="site.html">Home</a></li>
                     <li><a href="site.html#featured">Gift Cards</a></li>
                     <li><a href="site.html#vouchers">Vouchers</a></li>
-                    <li><a href="orders.html">My Orders</a></li>
-                    <li><a href="admin.html">Admin</a></li>
+                    <li><a href="Orders.html">My Orders</a></li>
+                    <li><a href="Admin.html">Admin</a></li>
                 </ul>
             </nav>
 
@@ -65,7 +66,7 @@
             <div class="col-2">
                 <h1>Giftcards the gift <br> that keeps on giving</h1>
                 <p>blah blah blah ...</p>
-                <a href="" class="btn">Buy Now &#128722;</a>
+                <a href="#featured" class="btn">Buy Now &#128722;</a>
             </div>
             <div class="col-2">
                 <div class ="slider">
@@ -102,30 +103,30 @@
         </div>
 
         <div class="deal-grid">
-            <a href="" class="deal-card">
+            <a href="#featured" class="deal-card">
                 <span class="deal-badge">-20%</span>
                 <img src="product_images/testing.png" alt="Deal 1">
                 <div class="deal-info">
                     <h4>EA FC Mobile Gift Card</h4>
-                    <p><span class="old">$40</span> <span class="new">$500</span></p>
+                    <p><span class="old">$40</span> <span class="new">$32</span></p>
                 </div>
             </a>
 
-            <a href="" class="deal-card">
+            <a href="#featured" class="deal-card">
                 <span class="deal-badge">-15%</span>
                 <img src="product_images/testing.png" alt="Deal 2">
                 <div class="deal-info">
                     <h4>EA FC Mobile Gift Card</h4>
-                    <p><span class="old">$100</span> <span class="new">$855</span></p>
+                    <p><span class="old">$100</span> <span class="new">$85</span></p>
                 </div>
             </a>
 
-            <a href="" class="deal-card">
+            <a href="#featured" class="deal-card">
                 <span class="deal-badge">-30%</span>
                 <img src="product_images/testing.png" alt="Deal 3">
                 <div class="deal-info">
                     <h4>EA FC Mobile Gift Card</h4>
-                    <p><span class="old">$15</span> <span class="new">$140</span></p>
+                    <p><span class="old">$15</span> <span class="new">$10.50</span></p>
                 </div>
             </a>
         </div>
@@ -139,8 +140,8 @@
             <h2 class="section-title">Featured Cards</h2>
             <select class="sort-select" id="sort-select" aria-label="Sort products">
                 <option value="suggested">Default Sorting</option>
-                <option value="under">Dưới 500.000₫</option>
-                <option value="above">Trên 500.000₫</option>
+                <option value="under">Under $50</option>
+                <option value="above">Above $50</option>
                 <option value="top">Top rated</option>
                 <option value="low">Price: low to high</option>
             </select>
@@ -153,7 +154,7 @@
     <div class="small-container">
         <div class="services-head">
             <h2>Other Services</h2>
-            <a href="" class="view-all">View all &#10095;</a>
+            <a href="#featured" class="view-all">View all &#10095;</a>
         </div>
 
         <div class="services-wrap">
@@ -168,7 +169,7 @@
 <section class="voucher-section" id="vouchers">
     <div class="section-head">
         <h2>Voucher</h2>
-        <a href="" class="view-all">View all &#10095;</a>
+        <a href="#vouchers" class="view-all">View all &#10095;</a>
     </div>
 
     <div class="voucher-grid">
@@ -177,7 +178,7 @@
         <div class="voucher-panel">
             <div class="panel-head">
                 <h3>Food &amp; Drink</h3>
-                <a href="" class="view-more">View more</a>
+                <a href="#featured" class="view-more">View more</a>
             </div>
 
             <div class="voucher-item">
@@ -210,7 +211,7 @@
         <div class="voucher-panel">
             <div class="panel-head">
                 <h3>Travel</h3>
-                <a href="" class="view-more">View more</a>
+                <a href="#featured" class="view-more">View more</a>
             </div>
 
             <div class="voucher-item">
@@ -243,7 +244,7 @@
         <div class="voucher-panel">
             <div class="panel-head">
                 <h3>Entertainment</h3>
-                <a href="" class="view-more">View more</a>
+                <a href="#featured" class="view-more">View more</a>
             </div>
 
             <div class="voucher-item">
@@ -334,7 +335,9 @@
         </div>
     </div>
 </footer>
+<script src="config.js"></script>
 <script src="api.js"></script>
+<script src="data.js"></script>
 <script src="site.js"></script> 
 </body>
 </html>
