@@ -77,7 +77,7 @@ function productUrl(item) {
     const isKnownDemoProduct = typeof PRODUCTS !== 'undefined' &&
         Object.prototype.hasOwnProperty.call(PRODUCTS, id);
 
-    // Do not route promotional placeholders to a made-up $10 product page.
+    // Do not route promotional placeholders to a made-up product page.
     // Unknown static names lead to the actual backend-powered catalog instead.
     if (!isBackendProduct && !isKnownDemoProduct) return 'site.html#featured';
 
@@ -91,9 +91,9 @@ function productUrl(item) {
 /* =========================================================
    PRODUCT CARDS - live backend data only.
    ========================================================= */
-const PRICE_SPLIT = 50;
+const PRICE_SPLIT = 500000;
 const productGrid = document.querySelector('.product-grid');
-const money = value => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(value) || 0);
+const money = value => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(Number(value) || 0);
 const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
 }[char]));
@@ -113,12 +113,20 @@ function imageFromBackend(url) {
 function fromBackend(product) {
     if (!product || product.id == null) throw new Error('The backend returned a product without an ID.');
     const price = Number(product.discountedPrice) > 0 ? Number(product.discountedPrice) : Number(product.price);
+    const category = product.category && product.category.name
+        ? String(product.category.name)
+        : '';
+    const parentCategory = product.category && product.category.parentCategory
+        ? String(product.category.parentCategory.name || '')
+        : '';
     return {
         id: product.id,
         name: product.title || 'Untitled product',
         price: Number.isFinite(price) ? price : 0,
         rating: averageRating(product),
-        img: imageFromBackend(product.imageUrl)
+        img: imageFromBackend(product.imageUrl),
+        category,
+        parentCategory
     };
 }
 
@@ -162,7 +170,11 @@ if (productGrid) {
             if (!page || !Array.isArray(page.content)) {
                 throw new Error('Unexpected response from /api/products. Expected a paginated response with a content array.');
             }
-            allProducts = page.content.map(fromBackend);
+            allProducts = page.content
+                .map(fromBackend)
+                .filter(product =>
+                    product.category !== 'Vouchers'
+                    && product.parentCategory !== 'Digital Services');
         } catch (error) {
             console.error('Could not load products from the backend:', error);
             allProducts = [];
@@ -226,8 +238,50 @@ function tickCountdown() {
 tickCountdown();
 setInterval(tickCountdown, 1000);
 
-/* ---------- deal-of-the-week + voucher cards ---------- */
-document.querySelectorAll('.deal-card, .voucher-item').forEach(card => {
+async function loadLimitedTimeOffers() {
+    const grid = document.querySelector('.deal-grid');
+    if (!grid) return;
+
+    try {
+        const page = await apiFetch('/api/products?pageNumber=0&pageSize=100');
+        if (!page || !Array.isArray(page.content) || page.content.length === 0) return;
+
+        const shuffled = [...page.content];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const randomIndex = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[i]];
+        }
+
+        const offers = shuffled.slice(0, 3).map(product => {
+            const originalPrice = Number(product.price) > 0
+                ? Number(product.price)
+                : Number(product.discountedPrice) || 0;
+            const discountPercent = Math.floor(Math.random() * 31) + 20;
+            const discountedPrice = Math.max(1, Math.round(originalPrice * (100 - discountPercent) / 100));
+            return { product, originalPrice, discountedPrice, discountPercent };
+        });
+
+        grid.innerHTML = offers.map(({ product, originalPrice, discountedPrice, discountPercent }) => `
+            <a href="products/products.html?id=${encodeURIComponent(product.id)}&name=${encodeURIComponent(product.title)}"
+               class="deal-card">
+                <span class="deal-badge">-${discountPercent}%</span>
+                <img src="${esc(imageFromBackend(product.imageUrl))}" alt="${esc(product.title)}"
+                     onerror="this.onerror=null;this.src='product_images/testing.png'">
+                <div class="deal-info">
+                    <h4>${esc(product.title)}</h4>
+                    <p><span class="old">${esc(money(originalPrice))}</span>
+                       <span class="new">${esc(money(discountedPrice))}</span></p>
+                </div>
+            </a>
+        `).join('');
+    } catch (error) {
+        console.warn('Could not load limited-time offers:', error.message);
+    }
+}
+loadLimitedTimeOffers();
+
+/* ---------- deal-of-the-week cards ---------- */
+document.querySelectorAll('.deal-card').forEach(card => {
     const text = selector => {
         const element = card.querySelector(selector);
         return element ? element.textContent.trim() : '';
@@ -238,6 +292,49 @@ document.querySelectorAll('.deal-card, .voucher-item').forEach(card => {
         price: text('.new') || text('.price'),
         img: image ? image.getAttribute('src') : ''
     });
+
+    async function loadVoucherProducts() {
+        const voucherGrid = document.querySelector('.voucher-grid');
+        if (!voucherGrid) return;
+
+        try {
+            const page = await apiFetch('/api/products?pageNumber=0&pageSize=100');
+            const products = page && Array.isArray(page.content) ? page.content : [];
+            const categoryNames = {
+                'Food & Drink': ['Starbucks Voucher', 'KFC Voucher', 'Highlands Coffee Voucher'],
+                'Travel': ['Grab Voucher', 'Agoda Voucher', 'Traveloka Voucher'],
+                'Entertainment': ['CGV Cinema Voucher', 'Lotte Cinema Voucher', 'Karaoke Voucher']
+            };
+
+            voucherGrid.innerHTML = Object.entries(categoryNames).map(([categoryName, names]) => {
+                const items = names.map(name => products.find(product =>
+                    String(product.title).toLowerCase() === name.toLowerCase())).filter(Boolean);
+                return `
+                    <div class="voucher-panel">
+                        <div class="panel-head">
+                            <h3>${esc(categoryName)}</h3>
+                            <a href="#featured" class="view-more">View more</a>
+                        </div>
+                        ${items.map(product => `
+                            <a href="products/products.html?id=${encodeURIComponent(product.id)}&name=${encodeURIComponent(product.title)}"
+                               class="voucher-item" style="text-decoration:none;color:inherit">
+                                <img src="${esc(imageFromBackend(product.imageUrl))}" alt="${esc(product.title)}"
+                                     onerror="this.onerror=null;this.src='product_images/testing.png'">
+                                <div class="info">
+                                    <h4>${esc(product.title)}</h4>
+                                    <p class="price">${esc(money(product.discountedPrice > 0 ? product.discountedPrice : product.price))}</p>
+                                    <p class="stars">★★★★★</p>
+                                </div>
+                            </a>
+                        `).join('')}
+                    </div>
+                `;
+            }).join('');
+        } catch (error) {
+            console.warn('Could not load vouchers:', error.message);
+        }
+    }
+    loadVoucherProducts();
     if (card.tagName === 'A') {
         card.href = target;
     } else {
@@ -251,47 +348,51 @@ document.querySelectorAll('.deal-card, .voucher-item').forEach(card => {
     const servicesTrack = document.querySelector('.services-track');
     if (!servicesTrack) return;
 
-    const groups = [
-        { title: 'Streaming', items: [
-            { id: 'netflix', name: 'Netflix Gift Card', price: '$15 ~ $100', rating: 4.5, img: 'product_images/testing.png' },
-            { id: 'spotify', name: 'Spotify Premium Card', price: '$10 ~ $60', rating: 4.5, img: 'product_images/testing.png' },
-            { name: 'Disney+ Gift Card', price: '$25 ~ $100', rating: 4, img: 'product_images/testing.png' }
-        ]},
-        { title: 'Shopping', items: [
-            { id: 'amazon', name: 'Amazon Gift Card', price: '$10 ~ $500', rating: 5, img: 'product_images/testing.png' },
-            { name: 'Google Play Gift Card', price: '$5 ~ $100', rating: 4.5, img: 'product_images/testing.png' },
-            { name: 'Apple Gift Card', price: '$10 ~ $200', rating: 4.5, img: 'product_images/testing.png' }
-        ]},
-        { title: 'Chat & Social', items: [
-            { name: 'Discord Nitro', price: '$10 ~ $100', rating: 4.5, img: 'product_images/testing.png' },
-            { name: 'Telegram Premium', price: '$5 ~ $50', rating: 4, img: 'product_images/testing.png' },
-            { name: 'Twitch Gift Card', price: '$10 ~ $100', rating: 4, img: 'product_images/testing.png' }
-        ]},
-        { title: 'Software', items: [
-            { name: 'Microsoft 365', price: '$20 ~ $100', rating: 4.5, img: 'product_images/testing.png' },
-            { name: 'Adobe Creative Cloud', price: '$30 ~ $300', rating: 4, img: 'product_images/testing.png' },
-            { name: 'NordVPN Subscription', price: '$15 ~ $120', rating: 4.5, img: 'product_images/testing.png' }
-        ]}
-    ];
+    async function loadServices() {
+        try {
+            const page = await apiFetch('/api/products?pageNumber=0&pageSize=100');
+            const products = page && Array.isArray(page.content) ? page.content : [];
+            const names = [
+                'Netflix Gift Card', 'Spotify Premium Card', 'Disney+ Gift Card',
+                'Amazon Gift Card', 'Google Play Gift Card', 'Apple Gift Card',
+                'Discord Nitro', 'Telegram Premium', 'Twitch Gift Card',
+                'Microsoft 365', 'Adobe Creative Cloud', 'NordVPN Subscription'
+            ];
+            const matching = names.map(name => products.find(product =>
+                String(product.title).toLowerCase() === name.toLowerCase()));
+            const items = matching.filter(Boolean);
 
-    servicesTrack.innerHTML = groups.map(group => `
-        <div class="svc-panel">
-            <div class="svc-panel-head">
-                <h3>${esc(group.title)}</h3>
-                <a href="site.html#featured" class="svc-more">View more</a>
-            </div>
-            ${group.items.map(item => `
-                <a href="${esc(productUrl(item))}" class="svc-row">
-                    <img src="${esc(item.img)}" alt="${esc(item.name)}">
-                    <div class="svc-info">
-                        <h4>${esc(item.name)}</h4>
-                        <p class="svc-price">${esc(item.price)}</p>
-                        <div class="stars" style="--rating: ${item.rating}">★★★★★</div>
+            const groups = [
+                { title: 'Streaming', items: items.filter(product => ['Netflix Gift Card', 'Spotify Premium Card', 'Disney+ Gift Card'].includes(product.title)) },
+                { title: 'Shopping', items: items.filter(product => ['Amazon Gift Card', 'Google Play Gift Card', 'Apple Gift Card'].includes(product.title)) },
+                { title: 'Chat & Social', items: items.filter(product => ['Discord Nitro', 'Telegram Premium', 'Twitch Gift Card'].includes(product.title)) },
+                { title: 'Software', items: items.filter(product => ['Microsoft 365', 'Adobe Creative Cloud', 'NordVPN Subscription'].includes(product.title)) }
+            ];
+
+            servicesTrack.innerHTML = groups.map(group => `
+                <div class="svc-panel">
+                    <div class="svc-panel-head">
+                        <h3>${esc(group.title)}</h3>
+                        <a href="site.html#featured" class="svc-more">View more</a>
                     </div>
-                </a>
-            `).join('')}
-        </div>
-    `).join('');
+                    ${group.items.map(product => `
+                        <a href="products/products.html?id=${encodeURIComponent(product.id)}&name=${encodeURIComponent(product.title)}" class="svc-row">
+                            <img src="${esc(imageFromBackend(product.imageUrl))}" alt="${esc(product.title)}"
+                                 onerror="this.onerror=null;this.src='product_images/testing.png'">
+                            <div class="svc-info">
+                                <h4>${esc(product.title)}</h4>
+                                <p class="svc-price">${esc(money(product.discountedPrice > 0 ? product.discountedPrice : product.price))}</p>
+                                <div class="stars" style="--rating: 4.5">★★★★★</div>
+                            </div>
+                        </a>
+                    `).join('')}
+                </div>
+            `).join('');
+        } catch (error) {
+            console.warn('Could not load other services:', error.message);
+        }
+    }
+    loadServices();
 
     function slide(direction) {
         const atEnd = servicesTrack.scrollLeft + servicesTrack.clientWidth >= servicesTrack.scrollWidth - 5;

@@ -4,7 +4,9 @@ import java.lang.reflect.Constructor;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.springframework.boot.CommandLineRunner;
@@ -14,12 +16,15 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.it3180hust.model.Cart;
 import com.it3180hust.model.Category;
+import com.it3180hust.model.Order;
+import com.it3180hust.model.OrderItem;
 import com.it3180hust.model.Product;
 import com.it3180hust.model.Size;
 import com.it3180hust.model.Sku;
 import com.it3180hust.model.User;
 import com.it3180hust.repository.CartRepository;
 import com.it3180hust.repository.CategoryRepostiory;
+import com.it3180hust.repository.OrderRepository;
 import com.it3180hust.repository.ProductRepository;
 import com.it3180hust.repository.UserRepository;
 
@@ -29,17 +34,20 @@ public class DataInitializer implements CommandLineRunner {
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
     private final CategoryRepostiory categoryRepository;
+    private final OrderRepository orderRepository;
     private final CartRepository cartRepository;
     private final PasswordEncoder passwordEncoder;
 
     public DataInitializer(UserRepository userRepository,
                           ProductRepository productRepository,
                           CategoryRepostiory categoryRepository,
+                          OrderRepository orderRepository,
                           CartRepository cartRepository,
                           PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
+        this.orderRepository = orderRepository;
         this.cartRepository = cartRepository;
         this.passwordEncoder = passwordEncoder;
     }
@@ -55,6 +63,7 @@ public class DataInitializer implements CommandLineRunner {
 
         // If some products exists, initialize database, else do nothing.
         if (productRepository.count() > 0) {
+            ensureCatalogExtras();
             return;
         }
 
@@ -144,8 +153,8 @@ public class DataInitializer implements CommandLineRunner {
         );
 
         createProductIfNotExists(
-                "Steam Wallet $20 Gift Card",
-                "Thẻ Steam Wallet giá trị 20 USD, dùng mua game, DLC và ứng dụng tại Steam.",
+                "Steam Wallet 200.000 VND Gift Card",
+                "Thẻ Steam Wallet giá trị 200.000 VND, dùng mua game, DLC và ứng dụng tại Steam.",
                 steam,
                 540000,
                 499000,
@@ -188,8 +197,8 @@ public class DataInitializer implements CommandLineRunner {
         );
 
         createProductIfNotExists(
-                "PlayStation Store $25 Gift Card",
-                "Gift card PlayStation Store 25 USD để mua game, DLC và các nội dung trên PSN.",
+                "PlayStation Store 625.000 VND Gift Card",
+                "Gift card PlayStation Store 625.000 VND để mua game, DLC và các nội dung trên PSN.",
                 playstation,
                 680000,
                 620000,
@@ -199,8 +208,8 @@ public class DataInitializer implements CommandLineRunner {
         );
 
         createProductIfNotExists(
-                "Xbox Live $15 Gift Card",
-                "Mã thẻ Xbox Live 15 USD dùng để mua game, DLC và đồ dùng trên nền tảng Xbox.",
+                "Xbox Live 375.000 VND Gift Card",
+                "Mã thẻ Xbox Live 375.000 VND dùng để mua game, DLC và đồ dùng trên nền tảng Xbox.",
                 xbox,
                 420000,
                 390000,
@@ -210,8 +219,8 @@ public class DataInitializer implements CommandLineRunner {
         );
 
         createProductIfNotExists(
-                "Nintendo eShop $20 Gift Card",
-                "Gift card Nintendo eShop 20 USD cho người dùng Nintendo Switch yêu thích game chạy trên eShop.",
+                "Nintendo eShop 500.000 VND Gift Card",
+                "Gift card Nintendo eShop 500.000 VND cho người dùng Nintendo Switch yêu thích game chạy trên eShop.",
                 nintendo,
                 520000,
                 490000,
@@ -241,6 +250,65 @@ public class DataInitializer implements CommandLineRunner {
                 "https://images.unsplash.com/photo-1542291026-7eec264c27ff",
                 180
         );
+
+        ensureCatalogExtras();
+    }
+
+    private void ensureCatalogExtras() {
+        Category digitalServices = createCategory("Digital Services", null, 1);
+
+        Category streaming = createCategory("Streaming", digitalServices, 2);
+        Category shopping = createCategory("Shopping", digitalServices, 2);
+        Category social = createCategory("Chat & Social", digitalServices, 2);
+        Category software = createCategory("Software", digitalServices, 2);
+
+        createProductIfNotExists("Netflix Gift Card", "Redeem Netflix Gift Card to add credit to your account.",
+                streaming, 2500000, 2375000, "Netflix", "product_images/testing.png", 500);
+        createProductIfNotExists("Spotify Premium Card", "Add Spotify Premium time to your account.",
+                streaming, 1500000, 1375000, "Spotify", "product_images/testing.png", 500);
+        createProductIfNotExists("Disney+ Gift Card", "Gift card for Disney+ subscription.",
+                streaming, 2500000, 2250000, "Disney+", "product_images/testing.png", 500);
+
+        createProductIfNotExists("Amazon Gift Card", "Use Amazon Gift Card for millions of items.",
+                shopping, 12500000, 12000000, "Amazon", "product_images/testing.png", 500);
+        createProductIfNotExists("Google Play Gift Card", "Top up Google Play balance.",
+                shopping, 2500000, 2250000, "Google", "product_images/testing.png", 500);
+        createProductIfNotExists("Apple Gift Card", "Apple Gift Card for apps, games and services.",
+                shopping, 5000000, 4750000, "Apple", "product_images/testing.png", 500);
+
+        createProductIfNotExists("Discord Nitro", "Discord Nitro subscription.",
+                social, 2500000, 2250000, "Discord", "product_images/testing.png", 500);
+        createProductIfNotExists("Telegram Premium", "Telegram Premium subscription.",
+                social, 1250000, 1125000, "Telegram", "product_images/testing.png", 500);
+        createProductIfNotExists("Twitch Gift Card", "Twitch Gift Card for subscriptions and purchases.",
+                social, 2500000, 2250000, "Twitch", "product_images/testing.png", 500);
+
+        createProductIfNotExists("Microsoft 365", "Microsoft 365 software subscription.",
+                software, 2500000, 2250000, "Microsoft", "product_images/testing.png", 500);
+        createProductIfNotExists("Adobe Creative Cloud", "Adobe Creative Cloud subscription.",
+                software, 7500000, 6750000, "Adobe", "product_images/testing.png", 500);
+        createProductIfNotExists("NordVPN Subscription", "NordVPN subscription.",
+                software, 3000000, 2700000, "NordVPN", "product_images/testing.png", 500);
+
+        Category vouchers = createCategory("Vouchers", digitalServices, 2);
+        createProductIfNotExists("Starbucks Voucher", "Starbucks Vietnam gift voucher.",
+                vouchers, 500000, 450000, "Starbucks", "product_images/voucher/voucher images.png", 500);
+        createProductIfNotExists("KFC Voucher", "KFC gift voucher.",
+                vouchers, 300000, 270000, "KFC", "product_images/voucher/voucher images.png", 500);
+        createProductIfNotExists("Highlands Coffee Voucher", "Highlands Coffee gift voucher.",
+                vouchers, 200000, 180000, "Highlands", "product_images/voucher/voucher images.png", 500);
+        createProductIfNotExists("Grab Voucher", "Grab ride and food gift voucher.",
+                vouchers, 500000, 450000, "Grab", "product_images/voucher/voucher images.png", 500);
+        createProductIfNotExists("Agoda Voucher", "Agoda hotel booking gift voucher.",
+                vouchers, 2000000, 1800000, "Agoda", "product_images/voucher/voucher images.png", 500);
+        createProductIfNotExists("Traveloka Voucher", "Traveloka travel gift voucher.",
+                vouchers, 1000000, 900000, "Traveloka", "product_images/voucher/voucher images.png", 500);
+        createProductIfNotExists("CGV Cinema Voucher", "CGV cinema gift voucher.",
+                vouchers, 400000, 360000, "CGV", "product_images/voucher/voucher images.png", 500);
+        createProductIfNotExists("Lotte Cinema Voucher", "Lotte Cinema gift voucher.",
+                vouchers, 400000, 360000, "Lotte", "product_images/voucher/voucher images.png", 500);
+        createProductIfNotExists("Karaoke Voucher", "Karaoke entertainment gift voucher.",
+                vouchers, 600000, 540000, "Karaoke", "product_images/voucher/voucher images.png", 500);
     }
 
     private Category createCategory(String name, Category parent, int level) {
@@ -327,6 +395,8 @@ public class DataInitializer implements CommandLineRunner {
         product.setBrand(brand);
         product.setImageUrl(imageUrl);
         product.setQuantity(quantity);
+        product.setPhysicalQuantity(quantity);
+        product.setReservedQuantity(0);
         product.setCategory(category);
         product.setCreatedAt(LocalDateTime.now());
         product.setSizes(buildSizes(quantity));
@@ -339,9 +409,9 @@ public class DataInitializer implements CommandLineRunner {
     private Set<Size> buildSizes(int totalQuantity) {
         Set<Size> tiers = new HashSet<>();
 
-        tiers.add(createSize("20 USD", Math.max(1, totalQuantity / 4)));
-        tiers.add(createSize("50 USD", Math.max(1, totalQuantity / 4)));
-        tiers.add(createSize("100 USD", Math.max(1, totalQuantity / 4)));
+        tiers.add(createSize("200.000 VND", Math.max(1, totalQuantity / 4)));
+        tiers.add(createSize("500.000 VND", Math.max(1, totalQuantity / 4)));
+        tiers.add(createSize("1.000.000 VND", Math.max(1, totalQuantity / 4)));
 
         return tiers;
     }
@@ -361,7 +431,27 @@ public class DataInitializer implements CommandLineRunner {
 
     private void fixOrInitSkusForExistingProducts() {
         List<Product> products = productRepository.findAll();
+        Map<Product, Integer> legacyReservations = new IdentityHashMap<>();
+        for (Order order : orderRepository.findAll()) {
+            if (!isUnshippedOrder(order.getOrderStatus()) || order.getOrderItems() == null) {
+                continue;
+            }
+            for (OrderItem item : order.getOrderItems()) {
+                if (item.getProduct() != null && item.getQuantity() > 0) {
+                    legacyReservations.merge(item.getProduct(), item.getQuantity(), Math::addExact);
+                }
+            }
+        }
+
         for (Product product : products) {
+            boolean changed = false;
+            if (product.getPhysicalQuantity() == 0 && product.getReservedQuantity() == 0) {
+                int reservedQuantity = legacyReservations.getOrDefault(product, 0);
+                product.setReservedQuantity(reservedQuantity);
+                product.setPhysicalQuantity(product.getQuantity() + reservedQuantity);
+                changed = true;
+            }
+
             List<Sku> skus = product.getSkus();
             if (skus == null || skus.isEmpty() || skus.stream().anyMatch(s -> s.getQuantity() <= 0 || s.getProduct() == null)) {
                 if (skus != null) {
@@ -371,9 +461,19 @@ public class DataInitializer implements CommandLineRunner {
                     product.setSkus(skus);
                 }
                 skus.addAll(buildSkus(product, product.getQuantity()));
+                changed = true;
+            }
+            if (changed) {
                 productRepository.save(product);
             }
         }
+    }
+
+    private boolean isUnshippedOrder(String status) {
+        return "PENDING".equalsIgnoreCase(status)
+                || "PLACED".equalsIgnoreCase(status)
+                || "CONFIRMED".equalsIgnoreCase(status)
+                || "CREATED".equalsIgnoreCase(status);
     }
 
     private List<Sku> buildSkus(Product product, int totalQuantity){
@@ -382,31 +482,31 @@ public class DataInitializer implements CommandLineRunner {
         int tierQuantity = Math.max(1, totalQuantity / 4);
         int salt = Math.abs((product.getTitle() != null ? product.getTitle() : "DEFAULT").hashCode() % 10000);
 
-        // Tier 1: 20 USD
+        // Tier 1: 200.000 VND
         Sku sku1 = new Sku();
         sku1.setProduct(product);
-        sku1.setSkuCode(basePrefix + "-" + salt + "-20USD");
-        sku1.setTierName("20 USD");
+        sku1.setSkuCode(basePrefix + "-" + salt + "-200K");
+        sku1.setTierName("200.000 VND");
         sku1.setPrice(500000);
         sku1.setDiscountedPrice(480000);
         sku1.setQuantity(tierQuantity);
         skus.add(sku1);
 
-        // Tier 2: 50 USD
+        // Tier 2: 500.000 VND
         Sku sku2 = new Sku();
         sku2.setProduct(product);
-        sku2.setSkuCode(basePrefix + "-" + salt + "-50USD");
-        sku2.setTierName("50 USD");
+        sku2.setSkuCode(basePrefix + "-" + salt + "-500K");
+        sku2.setTierName("500.000 VND");
         sku2.setPrice(1250000);
         sku2.setDiscountedPrice(1200000);
         sku2.setQuantity(tierQuantity);
         skus.add(sku2);
 
-        // Tier 3: 100 USD
+        // Tier 3: 1.000.000 VND
         Sku sku3 = new Sku();
         sku3.setProduct(product);
-        sku3.setSkuCode(basePrefix + "-" + salt + "-100USD");
-        sku3.setTierName("100 USD");
+        sku3.setSkuCode(basePrefix + "-" + salt + "-1M");
+        sku3.setTierName("1.000.000 VND");
         sku3.setPrice(2500000);
         sku3.setDiscountedPrice(2400000);
         sku3.setQuantity(tierQuantity);
