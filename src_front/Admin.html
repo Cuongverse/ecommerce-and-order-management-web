@@ -450,6 +450,7 @@ $('#ad-products').addEventListener('click', async e => {
         handleError(err);
     }
 });
+
 /* ---------- dashboard ---------- */
 function renderDashboard() {
     const delivered = orders.filter(o => norm(o.orderStatus) === 'DELIVERED');
@@ -461,6 +462,7 @@ function renderDashboard() {
     $('#kpi-success').textContent = delivered.length;
     $('#kpi-cancelled').textContent = cancelled.length;
 }
+
 /* ---------- tabs ---------- */
 document.querySelectorAll('.ad-tab').forEach(tab => tab.addEventListener('click', async () => {
     document.querySelectorAll('.ad-tab').forEach(t => t.classList.toggle('active', t === tab));
