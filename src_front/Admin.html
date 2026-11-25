@@ -115,7 +115,6 @@
         <label class="full">Description <textarea name="description"></textarea></label>
         <label class="full">Image (file name in product_images/, or a full link) <input name="imageUrl" placeholder="testing.png" required></label>
         <label>Brand <input name="brand"></label>
-        <label>Color <input name="color"></label>
         <label>Price <input name="price" type="number" min="0" step="1" required></label>
         <label>Price after discount <input name="discountedPrice" type="number" min="0" step="1"></label>
         <label>Discount % <input name="discountedPercent" type="number" min="0" max="100" step="1"></label>
@@ -145,7 +144,7 @@
 <script src="api.js"></script>
 <script>
 const $ = sel => document.querySelector(sel);
-const money = n => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n);
+const money = n => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(n);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => (
     { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
 ));

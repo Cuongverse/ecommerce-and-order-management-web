@@ -71,6 +71,7 @@ public class ProductServiceImplementation implements ProductService{
         product.setBrand(req.getBrand());
         product.setSizes(req.getSize());
         product.setQuantity(req.getQuantity());
+        product.setPhysicalQuantity(req.getQuantity());
         product.setCategory(thirdLevel);
         product.setCreatedAt(LocalDateTime.now());
 
@@ -132,9 +133,16 @@ public class ProductServiceImplementation implements ProductService{
     @Override
     public Product updateProduct(Long productId, Product req) throws ProductException {
         Product product = findProductById(productId);
+        int reservedQuantity = product.getReservedQuantity();
 
         // update only properties which are listed on the json file
-        BeanUtils.copyProperties(req, product, PropertyUtils.getIgnoredPropertyNames(req));
+        String[] ignoredProperties = PropertyUtils.getIgnoredPropertyNames(req);
+        String[] protectedStockProperties = java.util.Arrays.copyOf(ignoredProperties, ignoredProperties.length + 2);
+        protectedStockProperties[ignoredProperties.length] = "physicalQuantity";
+        protectedStockProperties[ignoredProperties.length + 1] = "reservedQuantity";
+        BeanUtils.copyProperties(req, product, protectedStockProperties);
+        product.setReservedQuantity(reservedQuantity);
+        product.setPhysicalQuantity(product.getQuantity() + reservedQuantity);
         product.calculateDiscountPercent();
 
         return productRepository.save(product);

@@ -54,6 +54,12 @@ public class Product {
     @Column(name="quantity")
     private int quantity;
 
+    @Column(name="physical_quantity")
+    private Integer physicalQuantity = 0;
+
+    @Column(name="reserved_quantity")
+    private Integer reservedQuantity = 0;
+
     @Column(name="brand")
     private String brand;
 
@@ -185,6 +191,22 @@ public class Product {
 
     public void setQuantity(int quantity) {
         this.quantity = quantity;
+    }
+
+    public int getPhysicalQuantity() {
+        return physicalQuantity != null ? physicalQuantity : (quantity > 0 ? quantity : 0);
+    }
+
+    public void setPhysicalQuantity(Integer physicalQuantity) {
+        this.physicalQuantity = physicalQuantity != null ? physicalQuantity : 0;
+    }
+
+    public int getReservedQuantity() {
+        return reservedQuantity != null ? reservedQuantity : 0;
+    }
+
+    public void setReservedQuantity(Integer reservedQuantity) {
+        this.reservedQuantity = reservedQuantity != null ? reservedQuantity : 0;
     }
 
     public String getBrand() {

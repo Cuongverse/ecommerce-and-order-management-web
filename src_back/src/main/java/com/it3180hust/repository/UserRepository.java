@@ -8,4 +8,6 @@ import org.springframework.data.jpa.repository.Query;
 public interface UserRepository extends JpaRepository<User,Long>{
     @Query("SELECT u FROM User u WHERE u.email=:email")
     public User findByEmail(String email);
+
+    long countByRole(String role);
 }

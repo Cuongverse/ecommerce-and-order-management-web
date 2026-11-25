@@ -28,7 +28,7 @@ public class PaymentController {
     private final PaymentService paymentService;
     private final OrderService orderService;
 
-    public PaymentController(PaymentService paymentService,
+    public PaymentController(
                              OrderService orderService) {
         this.paymentService = paymentService;
         this.orderService = orderService;
